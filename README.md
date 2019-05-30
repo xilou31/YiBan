@@ -46,4 +46,12 @@ https://modao.cc/tutorials/%E5%A2%A8%E5%88%80%E8%A7%86%E9%A2%91-%E5%A2%A8%E5%88%
 
 https://org.modao.cc/app/438de05c14b38f685d8a6598dccbde6a1e29921c
 
+1.产品特性要反映在UI上
 
+2.要多多考虑用户的使用习惯
+
+3.确定要做什么东西
+
+4.UI要反映出核心点
+
+5.功能要定义清楚
