@@ -114,7 +114,7 @@ class Like(db.Model):
     blog_id = db.Column(db.Integer, db.ForeignKey('blog.id'))  # 所属博客
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'))  # 所属用户
     # user_to_id = db.Column(db.Integer, db.ForeignKey('user.id'))  # 所属用户
-
+# 私聊
 class Chat(db.Model):
     __tablename__ = "chat"
     id = db.Column(db.Integer, primary_key=True)  # 编号
