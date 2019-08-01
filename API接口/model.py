@@ -1,7 +1,6 @@
-from flask_sqlalchemy import SQLAlchemy
-from datetime import datetime
 
-db = SQLAlchemy()
+from datetime import datetime
+from . import db
 
 
 # 会员
@@ -112,8 +111,9 @@ class Like(db.Model):
     __tablename__ = "like"
     id = db.Column(db.Integer, primary_key=True)  # 编号
     blog_id = db.Column(db.Integer, db.ForeignKey('blog.id'))  # 所属博客
-    user_id = db.Column(db.Integer, db.ForeignKey('user.id'))  # 所属用户
-    # user_to_id = db.Column(db.Integer, db.ForeignKey('user.id'))  # 所属用户
+    user_like_id = db.Column(db.Integer, db.ForeignKey('user.id'))  # 所属用户
+    user_liked_id = db.Column(db.Integer, db.ForeignKey('user.id'))  # 所属用户
+
 # 私聊
 class Chat(db.Model):
     __tablename__ = "chat"

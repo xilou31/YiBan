@@ -1,8 +1,5 @@
 # coding: utf-8
-from flask import Flask
-
-app = Flask(__name__)
-
+from . import app
 
 # 获取竞赛推文
 @app.route("/home/competition")
@@ -90,3 +87,4 @@ def index():
 
 if __name__ == "__main__":
     app.run()
+
