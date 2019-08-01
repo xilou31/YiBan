@@ -4,4 +4,4 @@
 ### 搞不定！！！！！
 # 这两天先把需求API给整理到易班上
 
-[Flask实现图片的上传、下载及展示] (https://blog.csdn.net/weixin_36380516/article/details/80347192),可以用来实现头像，至于文章的图片怎么处理还需要看看
+[Flask实现图片的上传、下载及展示](https://blog.csdn.net/weixin_36380516/article/details/80347192) 可以用来实现头像，至于文章的图片怎么处理还需要看看
