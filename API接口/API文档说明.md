@@ -5,3 +5,21 @@
 #### 这两天先把需求API给整理到易班上
 
 [Flask实现图片的上传、下载及展示](https://blog.csdn.net/weixin_36380516/article/details/80347192) 可以用来实现头像，至于文章的图片怎么处理还需要看看
+
+## ##
+
+#### 1.获取竞赛推文接口
+#### URL：/home/competition
+#### 说明：无
+#### 提交参数：无
+### 返回参数
+|参数|类型|说明|
+|:-:|:-:|:-:|
+|title|varchar|返回推文标题|
+|content|varchar|返回推文的部分内容|
+|time|date|推文的发布日期|
+|pageviews|int|推文被浏览的次数|
+
+
+
+
