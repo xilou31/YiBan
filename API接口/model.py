@@ -1,6 +1,16 @@
-
 from datetime import datetime
-from . import db
+# from app import db
+
+"""
+from flask import Flask
+from flask_sqlalchemy import SQLAlchemy
+import pymysql
+app = Flask(__name__)
+app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql+pymysql://root:123456@47.107.98.254:3306/yiban'
+app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+app.config['SECRET_KEY'] = 'xxx'
+db = SQLAlchemy(app)
+"""
 
 
 # 会员
@@ -20,6 +30,7 @@ class User(db.Model):
     blogcol = db.relationship('Blogcol', backref='user')  # 博客收藏外键关系关联
     search = db.relationship('Search', backref='user')  # 搜索历史外键关系关联
     chat = db.relationship('Chat', backref='user')  # 搜索历史外键关系关联
+
     def __repr__(self):
         return "<User %r>" % self.name
 
@@ -114,9 +125,14 @@ class Like(db.Model):
     user_like_id = db.Column(db.Integer, db.ForeignKey('user.id'))  # 所属用户
     user_liked_id = db.Column(db.Integer, db.ForeignKey('user.id'))  # 所属用户
 
+
 # 私聊
 class Chat(db.Model):
     __tablename__ = "chat"
     id = db.Column(db.Integer, primary_key=True)  # 编号
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'))  # 所属用户
     user_to_id = db.Column(db.Integer, db.ForeignKey('user.id'))  # 所属用户
+
+
+if __name__ == "__main__":
+# db.create_all()
