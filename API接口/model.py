@@ -27,7 +27,8 @@ db = SQLAlchemy(app)
 class User(db.Model):
     __tablename__ = "user"
     id = db.Column(db.Integer, primary_key=True)  # 编号
-    name = db.Column(db.String(100), unique=True)  # 昵称
+    username = db.Column(db.String(100), unique=True)  # 用户名　（唯一的）
+    nickname = db.Column(db.String(100))  # 昵称
     pwd = db.Column(db.String(100))  # 密码
     sex = db.Column(db.Integer)  # 性别
     email = db.Column(db.String(100), unique=True)  # 邮箱
@@ -186,7 +187,6 @@ class Chat(db.Model):
 """
 
 if __name__ == "__main__":
-
     db.create_all()
 """
     cp = Competition.query.get(2)

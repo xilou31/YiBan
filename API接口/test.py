@@ -4,17 +4,17 @@ from model import *
 db.create_all()
 
 
-user1 = User(name="lmp", pwd='123456', sex=1, email='382552192@qq.com', phone=123456789, school="hnnydx",
+user1 = User(username="lmp", pwd='123456', sex=1, email='382552192@qq.com', phone=123456789, school="hnnydx",
              level="大二", face="/root/face/123456.png")
-user2 = User(name="lzk", pwd='12345622', sex=2, email='382552192s22@qq.com', phone=123, school="hnnydx222",
+user2 = User(username="lzk", pwd='12345622', sex=2, email='382552192s22@qq.com', phone=123, school="hnnydx222",
              level="大一", face="/root/face/123456222.png")
-user3 = User(name="abc", pwd='123456', sex=1, email='3825521sdas92@qq.com', phone=123489, school="hnnsdsasydx",
+user3 = User(username="abc", pwd='123456', sex=1, email='3825521sdas92@qq.com', phone=123489, school="hnnsdsasydx",
              level="大二", face="/root/face/123456ss.png")
-user4 = User(name="lhb", pwd='12345622', sex=2, email='3825521s9sdas222@qq.com', phone=1234522222, school="hnnydxss222",
+user4 = User(username="lhb", pwd='12345622', sex=2, email='3825521s9sdas222@qq.com', phone=1234522222, school="hnnydxss222",
              level="大一", face="/root/face/123456222d.png")
-user5 = User(name="cyj", pwd='123456', sex=1, email='382552s1sdas92@qq.com', phone=1234829, school="hnnsdsasydx",
+user5 = User(username="cyj", pwd='123456', sex=1, email='382552s1sdas92@qq.com', phone=1234829, school="hnnsdsasydx",
              level="大二", face="/root/face/123456ssss.png")
-user6 = User(name="qxj", pwd='12345622', sex=2, email='38255219dsdas222@qq.com', phone=12345422222,
+user6 = User(username="qxj", pwd='12345622', sex=2, email='38255219dsdas222@qq.com', phone=12345422222,
              school="hnnydxss222",
              level="大一", face="/root/face/123456222dsd.png")
 
@@ -50,13 +50,16 @@ db.session.add(team4)
 db.session.add(team5)
 db.session.add(team6)
 db.session.commit()
+
+
 c = Competition.query.get(1)
 print(c)
 teams = c.team
 for team in teams:
     print(team.teamname, team.info, team.need, team.master_id)
     user = User.query.get(team.master_id)
-    print("my name is " + user.name)
+    print("my name is " + user.username)
 """
+
 
 
