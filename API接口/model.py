@@ -1,16 +1,19 @@
 from datetime import datetime
 
-# from . import db
 
-"""
+
+# 链接服务器用的代码
 from flask import Flask
 from flask_sqlalchemy import SQLAlchemy
 import pymysql
+
 app = Flask(__name__)
-app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql+pymysql://root:123456@47.107.98.254:3306/yiban'
+app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql+pymysql://root:123456@47.107.98.254:3306/yibantest'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.config['SECRET_KEY'] = 'xxx'
 db = SQLAlchemy(app)
+
+# 本地测试用的代码
 """
 
 from flask import Flask
@@ -21,6 +24,9 @@ app = Flask(__name__)
 basedir = os.path.abspath(os.path.dirname(__file__))
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///' + os.path.join(basedir, 'data.sqlite')
 db = SQLAlchemy(app)
+"""
+
+
 
 
 # 用户
