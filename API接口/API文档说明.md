@@ -29,6 +29,7 @@
 | id    | int     | 返回推文id     |
 | title | varchar | 返回推文标题   |
 | time  | date    | 推文的发布日期 |
+| pageviews | int     | 推文被浏览的次数（可用于排序） |
 
 1.  获取活动推文接口
 
