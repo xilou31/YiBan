@@ -1,5 +1,5 @@
 from model import *
-
+import time
 # 添加的数据
 """
 db.create_all()
@@ -65,8 +65,29 @@ db.session.add(act6)
 db.session.commit()
 
 """
-
-
+act1 = Activity(title="活动标题测试１", content="活动内容测试１", author="活动网站发布人1")
+time.sleep(1)
+act2 = Activity(title="活动标题测试２", content="活动内容测试2", author="活动网站发布人2")
+time.sleep(1)
+act3 = Activity(title="活动标题测试3", content="活动内容测试3", author="活动网站发布人3")
+time.sleep(1)
+act4 = Activity(title="活动标题测试4", content="活动内容测试4", author="活动网站发布人4")
+time.sleep(1)
+act5 = Activity(title="活动标题测试5", content="活动内容测试5", author="活动网站发布人5")
+time.sleep(1)
+act6 = Activity(title="活动标题测试6", content="活动内容测试6", author="活动网站发布人6")
+db.session.add(act1)
+time.sleep(1)
+db.session.add(act2)
+time.sleep(1)
+db.session.add(act3)
+time.sleep(1)
+db.session.add(act4)
+time.sleep(1)
+db.session.add(act5)
+time.sleep(1)
+db.session.add(act6)
+db.session.commit()
 
 # 查询的操作
 """

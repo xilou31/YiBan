@@ -2,10 +2,12 @@
 from model import *
 import json
 from flask import request
+import os
+basedir = os.path.abspath(os.path.dirname(__file__))
 
 
 # 获取竞赛推文
-@app.route("/home/compete/", methods=['POST', 'GET'])
+@app.route("/home/compete", methods=['POST', 'GET'])
 def HomeCpt():
     if request.method == 'POST' and request.form.get('sort') == '0':
         # 默认是时间顺序排列，直接ｇｅｔ和ｐｏｓｔ上来的不是０的时候，就时间排序，
@@ -33,9 +35,9 @@ def HomeCpt():
                        'time': time}
             payload.append(content)
             content = {}
-        payload = json.dumps(payload)
-        return payload
-
+        data = {"data":payload}
+        payload = json.dumps(data)
+        return payload,200
     else:
         # 新发布的文章时间比较大，就先出现用ｄｅｓｃ从大到小排序
         c = Competition.query.order_by(Competition.create_time.desc()).all()
@@ -48,8 +50,9 @@ def HomeCpt():
                        'time': time}
             payload.append(content)
             content = {}
-        payload = json.dumps(payload)
-        return payload
+        data = {"data":payload}
+        payload = json.dumps(data)
+        return payload,200
 
 
 # 获取活动推文
@@ -67,8 +70,9 @@ def HomeAct():
                        'time': time}
             payload.append(content)
             content = {}
-        payload = json.dumps(payload)
-        return payload
+        data = {"data":payload}
+        payload = json.dumps(data)
+        return payload,200
 
     else:
         # 新发布的文章时间比较大，就先出现用ｄｅｓｃ从大到小排序
@@ -82,8 +86,24 @@ def HomeAct():
                        'time': time}
             payload.append(content)
             content = {}
-        payload = json.dumps(payload)
-        return payload
+        data = {"data":payload}
+        payload = json.dumps(data)
+        return payload, 200
+
+
+
+# 上传照片test接口
+@app.route("/uploadpic",methods=["GET", "POST"])
+def uploadpic():
+
+    img = request.files.get('pic')
+    path = basedir + "/photo/"
+    file_path = path + img.filename
+    img.save(file_path)
+    return "success"
+
+
+
 
 # 竞赛搜索
 @app.route("/home/searchcp")
