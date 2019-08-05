@@ -1,7 +1,7 @@
 from datetime import datetime
 
 
-
+"""
 # 链接服务器用的代码
 from flask import Flask
 from flask_sqlalchemy import SQLAlchemy
@@ -24,7 +24,7 @@ app = Flask(__name__)
 basedir = os.path.abspath(os.path.dirname(__file__))
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///' + os.path.join(basedir, 'data.sqlite')
 db = SQLAlchemy(app)
-"""
+
 
 
 
@@ -78,7 +78,7 @@ class Blog(db.Model):
 class Competition(db.Model):
     __tablename__ = "competition"
     id = db.Column(db.Integer, primary_key=True)  # 编号
-    title = db.Column(db.String(255), unique=True)  # 标题
+    title = db.Column(db.String(255))  # 标题
     content = db.Column(db.Text)  # 内容
     author = db.Column(db.String(100))  # 作者
     num_of_view = db.Column(db.Integer, default=0)  # 浏览次数
@@ -91,7 +91,7 @@ class Competition(db.Model):
 class Activity(db.Model):
     __tablename__ = "activity"
     id = db.Column(db.Integer, primary_key=True)  # 编号
-    title = db.Column(db.String(255), unique=True)  # 标题
+    title = db.Column(db.String(255))  # 标题
     content = db.Column(db.Text)  # 内容
     author = db.Column(db.String(100))  # 作者
     num_of_view = db.Column(db.Integer, default=0)  # 浏览次数

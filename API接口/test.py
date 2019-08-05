@@ -1,5 +1,6 @@
 from model import *
 
+# 添加的数据
 """
 db.create_all()
 
@@ -30,6 +31,12 @@ team3 = Team(master_id=3, teamname="咸鱼队3", need=10, info="咸鱼３队简�
 team4 = Team(master_id=4, teamname="咸鱼队4", need=10, info="咸鱼４队简介，我们需要最帅的人来", competition_id=2)
 team5 = Team(master_id=5, teamname="咸鱼队5", need=10, info="咸鱼５队简介，我们需要最帅的人来", competition_id=2)
 team6 = Team(master_id=6, teamname="咸鱼队6", need=10, info="咸鱼６队简介，我们需要最帅的人来", competition_id=2)
+act1 = Activity(title="活动标题测试１", content="活动内容测试１", author="活动网站发布人1")
+act2 = Activity(title="活动标题测试２", content="活动内容测试2", author="活动网站发布人2")
+act3 = Activity(title="活动标题测试3", content="活动内容测试3", author="活动网站发布人3")
+act4 = Activity(title="活动标题测试4", content="活动内容测试4", author="活动网站发布人4")
+act5 = Activity(title="活动标题测试5", content="活动内容测试5", author="活动网站发布人5")
+act6 = Activity(title="活动标题测试6", content="活动内容测试6", author="活动网站发布人6")
 
 db.session.add(user1)
 db.session.add(user2)
@@ -49,9 +56,20 @@ db.session.add(team3)
 db.session.add(team4)
 db.session.add(team5)
 db.session.add(team6)
+db.session.add(act1)
+db.session.add(act2)
+db.session.add(act3)
+db.session.add(act4)
+db.session.add(act5)
+db.session.add(act6)
 db.session.commit()
 
+"""
 
+
+
+# 查询的操作
+"""
 c = Competition.query.get(1)
 print(c)
 teams = c.team
@@ -60,6 +78,8 @@ for team in teams:
     user = User.query.get(team.master_id)
     print("my name is " + user.username)
 """
+
+
 
 
 
