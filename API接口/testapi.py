@@ -129,7 +129,7 @@ def CptDetail():
     teams = com.team
     for t in teams:
         teamid = t.id
-        teamauthor = t.master_id
+        teamauthor = User.query.get(t.master_id).username
         teamauthorface = User.query.get(t.master_id).face
         teamcontent = t.info
         teamname = t.teamname
