@@ -41,7 +41,7 @@ class User(db.Model):
     phone = db.Column(db.String(11), unique=True)  # 手机号码
     school = db.Column(db.String(100))  # 学校
     level = db.Column(db.String(100))  # 年级
-    face = db.Column(db.String(255), unique=True)  # 头像
+    face = db.Column(db.String(255))  # 头像
     addtime = db.Column(db.DateTime, index=True, default=datetime.now)  # 注册时间
 
     comments = db.relationship('Comment', backref='user')  # 评论外键关系关联
@@ -52,21 +52,25 @@ class User(db.Model):
     actcol = db.relationship('Actcol', backref='user')  # 活动收藏外键关系关联
     myblog = db.relationship('Blog', backref='user')  # 我的博客外键关系关联
 
-    """私聊和关注关联"""
+    """回复评论　私聊　关注　关系关联"""
+    reply_sent = db.relationship('Reply', foreign_keys='Reply.sender_id',
+                                 backref='author', lazy='dynamic')  # 我发的
+    reply_received = db.relationship('Reply', foreign_keys='Reply.recipient_id',
+                                     backref='recipient', lazy='dynamic')  # 我收的
     messages_sent = db.relationship('Message', foreign_keys='Message.sender_id',
-                                    backref='author', lazy='dynamic')  # 看我发给谁
+                                    backref='author', lazy='dynamic')  # 我发的
     messages_received = db.relationship('Message', foreign_keys='Message.recipient_id',
-                                        backref='recipient', lazy='dynamic')  # 看谁发给我
+                                        backref='recipient', lazy='dynamic')  # 我收的
     followed = db.relationship('Follow',
                                foreign_keys='Follow.follower_id',
                                backref=db.backref('follower', lazy='joined'),
                                lazy='dynamic',
-                               cascade='all, delete-orphan')  # 看谁关注我
+                               cascade='all, delete-orphan')  # 关注我的
     followers = db.relationship('Follow',
                                 foreign_keys='Follow.followed_id',
                                 backref=db.backref('followed', lazy='joined'),
                                 lazy='dynamic',
-                                cascade='all, delete-orphan')  # 看我关注谁
+                                cascade='all, delete-orphan')  # 我关注的
 
     def __repr__(self):
         return "<User %r>" % self.name
@@ -111,7 +115,7 @@ class Activity(db.Model):
     content = db.Column(db.Text)  # 内容
     author = db.Column(db.String(100))  # 作者
     num_of_view = db.Column(db.Integer, default=0)  # 浏览次数
-    commentnum = db.Column(db.BigInteger)  # 评论量
+    # commentnum = db.Column(db.BigInteger)  # 评论量
     create_time = db.Column(db.DateTime, index=True, default=datetime.now)  # 添加时间
     comments = db.relationship('Comment', backref='activity')  # 评论外键关系关联
     actcol = db.relationship('Actcol', backref='activity')  # 博客收藏外键关系关联
@@ -138,9 +142,21 @@ class Comment(db.Model):
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'))  # 所属用户
     activity_id = db.Column(db.Integer, db.ForeignKey('activity.id'))  # 所属活动
     addtime = db.Column(db.DateTime, index=True, default=datetime.now)  # 添加时间
+    replys = db.relationship('Reply', backref='comment')  # 评论外键关系关联
 
     def __repr__(self):
         return "<Comment %r>" % self.id
+
+
+# 回复评论
+class Reply(db.Model):
+    __tablename__ = "reply"
+    id = db.Column(db.Integer, primary_key=True)  # 编号
+    sender_id = db.Column(db.Integer, db.ForeignKey('user.id'))  # 发送者
+    recipient_id = db.Column(db.Integer, db.ForeignKey('user.id'))  # 接收者
+    content = db.Column(db.TEXT)  # 回复内容
+    comment_id = db.Column(db.Integer, db.ForeignKey('comment.id'))  # 所属评论
+    addtime = db.Column(db.DateTime, index=True, default=datetime.now)  # 添加时间
 
 
 # 博客收藏
@@ -169,7 +185,7 @@ class Actcol(db.Model):
 
 # 竞赛收藏
 class Cptcol(db.Model):
-    __tablename__ = "Cptcol"
+    __tablename__ = "cptcol"
     id = db.Column(db.Integer, primary_key=True)  # 编号
     competition_id = db.Column(db.Integer, db.ForeignKey('competition.id'))  # 所属竞赛
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'))  # 所属用户
@@ -209,38 +225,72 @@ class Follow(db.Model):
 
 
 if __name__ == "__main__":
-    db.create_all()
+
+    pass
 
 """
-    db.drop_all()
     db.create_all()
+
     user1 = User(username="lmp", pwd='123456', sex=1, email='382552192@qq.com', phone=123456789, school="hnnydx",
-                 level="大二", face="/root/face/123456.png")
+                 level="大二", face="/static/photo/8.jpeg")
     user2 = User(username="lzk", pwd='12345622', sex=2, email='382552192s22@qq.com', phone=123, school="hnnydx222",
-                 level="大一", face="/root/face/123456222.png")
+                 level="大一", face="/static/photo/123.jpg")
     user3 = User(username="abc", pwd='123456', sex=1, email='3825521sdas92@qq.com', phone=123489, school="hnnsdsasydx",
-                 level="大二", face="/root/face/123456ss.png")
+                 level="大二", face="/static/photo/12.png")
     user4 = User(username="lhb", pwd='12345622', sex=2, email='3825521s9sdas222@qq.com', phone=1234522222,
                  school="hnnydxss222",
-                 level="大一", face="/root/face/123456222d.png")
+                 level="大一", face="/static/photo/12.png")
     user5 = User(username="cyj", pwd='123456', sex=1, email='382552s1sdas92@qq.com', phone=1234829,
                  school="hnnsdsasydx",
-                 level="大二", face="/root/face/123456ssss.png")
+                 level="大二", face="/static/photo/123.jpg")
     user6 = User(username="qxj", pwd='12345622', sex=2, email='38255219dsdas222@qq.com', phone=12345422222,
                  school="hnnydxss222",
-                 level="大一", face="/root/face/123456222dsd.png")
-    cop1 = Competition(title="竞赛标题测试１", content="竞赛内容测试１", author="网站发布人1")
-    cop2 = Competition(title="竞赛标题测试２", content="竞赛内容测试2", author="网站发布人2")
-    cop3 = Competition(title="竞赛标题测试3", content="竞赛内容测试3", author="网站发布人3")
-    cop4 = Competition(title="竞赛标题测试4", content="竞赛内容测试4", author="网站发布人4")
-    cop5 = Competition(title="竞赛标题测试5", content="竞赛内容测试5", author="网站发布人5")
-    cop6 = Competition(title="竞赛标题测试6", content="竞赛内容测试6", author="网站发布人6")
-    team1 = Team(master_id=1, teamname="咸鱼队１", need=40, info="咸鱼１队简介，我们需要最帅的人40来", competition_id=1)
-    team2 = Team(master_id=2, teamname="咸鱼队2", need=50, info="咸鱼２队简介，我们需要最帅的人50来", competition_id=1)
-    team3 = Team(master_id=3, teamname="咸鱼队3", need=105, info="咸鱼３队简介，我们需要最帅的人105来", competition_id=1)
-    team4 = Team(master_id=4, teamname="咸鱼队4", need=104, info="咸鱼４队简介，我们需要最帅的人104来", competition_id=2)
-    team5 = Team(master_id=5, teamname="咸鱼队5", need=108, info="咸鱼５队简介，我们需要最帅的人108来", competition_id=2)
-    team6 = Team(master_id=6, teamname="咸鱼队6", need=110, info="咸鱼６队简介，我们需要最帅的人110来", competition_id=2)
+                 level="大一", face="/static/photo/8.jpeg")
+    cop1 = Competition(title="竞赛标题测试１", content="竞赛内容测试１竞赛内容测试１竞赛内容测试１竞赛内容测试１竞赛内容测试１竞赛内容测试１"
+                                                "竞赛内容测试１竞赛内容测试１竞赛内容测试１竞赛内容测试１竞赛内容测试１"
+                                                "竞赛内容测试１竞赛内容测试１竞赛内容测试１竞赛内容测试１竞赛内容测试１竞赛内容测试１"
+                                                "<img src=\"http://188888888.xyz:5000/static/photo/8.jpeg\"/>" 
+                                                "竞赛内容测试１竞赛内容测试１竞赛内容测试１竞赛内容测试１竞赛内容测试１竞赛内容测试１"
+                                                "竞赛内容测试１竞赛内容测试１竞赛内容测试１竞赛内容测试１竞赛内容测试１", author="网站发布人1")
+    cop2 = Competition(title="竞赛标题测试２", content="竞赛内容测试2竞赛内容测试2竞赛内容测试2竞赛内容测试2竞赛内容测试2竞赛内容测试2竞赛"
+                                                "内容测试2竞赛内容测试2竞赛内容测试2竞赛内容测试2竞赛内容测试2竞赛内容测试2竞赛内容测试2"
+                                                "竞赛内容测试2竞赛内容测试2竞赛内容测试2竞赛内容测试2竞赛内容测试2竞赛内容测试2竞赛内容"
+                                                "<img src=\"http://188888888.xyz:5000/static/photo/123.jpg\"/>"
+                                                "测试2竞赛内容测试2竞赛内容测试2竞赛内容测试2竞赛内容测试2竞赛内容测试2竞赛内容测试2竞赛"
+                                                "内容测试2竞赛内容测试2竞赛内容测试2竞赛内容测试2", author="网站发布人2")
+    cop3 = Competition(title="竞赛标题测试3", content="竞赛内容测试竞赛内容测试竞赛内容测试竞赛内容测试竞赛内容测试竞赛内容测试竞赛内容测试"
+                                                "<img src=\"http://188888888.xyz:5000/static/photo/12.png\"/>"
+                                                "竞赛内容测试竞赛内容测试竞赛内容测试竞赛内容测试竞赛内容测试竞赛内容测试竞赛内容测试竞赛"
+                                                "内容测试竞赛内容测试竞赛内容测试竞赛内容测试竞赛内容测试竞赛内容测"
+                                                "试竞赛内容测试", author="网站发布人3")
+    cop4 = Competition(title="竞赛标题测试4", content="竞赛内容测试4竞赛内容测试竞赛内容测试竞赛内容测试竞赛内容测试竞赛内容测试竞赛内容测"
+                                                "<img src=\"http://188888888.xyz:5000/static/photo/123.jpg\"/>"
+                                                "试竞赛内容测试竞赛内容测试竞赛内容测试竞赛内容测试竞赛内容测试竞赛内容测试竞赛内容测"
+                                                "试竞赛内容测试竞赛内容测试竞赛内容测试竞赛内容测试竞赛内容测试竞赛内容测试竞赛内容"
+                                                "测试竞赛内容测试", author="网站发布人4")
+    cop5 = Competition(title="竞赛标题测试5", content="竞赛内容测试5竞赛内容测试竞赛内容测试竞赛内容测试竞赛内容测试竞赛内容测试竞赛内容测"
+                                                "<img src=\"http://188888888.xyz:5000/static/photo/123.jpg\"/>"
+                                                "试竞赛内容测试竞赛内容测试竞赛内容测试竞赛内容测试竞赛内容测试竞赛内容测试竞赛内容测试竞"
+                                                "赛内容测试竞赛内容测试竞赛内容测试竞赛内容测试竞赛内容测试竞赛内"
+                                                "容测试竞赛内容测试竞赛内容测试", author="网站发布人5")
+    cop6 = Competition(title="竞赛标题测试6", content="竞赛内容测试6竞赛内容测试竞赛内容测试竞赛内容测试竞赛内容测试竞赛内容测试竞赛内容测试"
+                                                "竞赛内容测试竞赛内容测试竞赛内容测试竞赛内容测试竞赛内容测试竞赛内容测试竞赛内容测"
+                                                "试竞赛内容测试竞赛内容测试竞赛内容测试竞赛内容测试竞赛内容测试竞赛内容测"
+                                                "<img src=\"http://188888888.xyz:5000/static/photo/123.jpg\"/>"
+                                                "试竞赛内容测试竞赛内容测试", author="网站发布人6")
+
+    team1 = Team(master_id=1, teamname="咸鱼队1", need=40, info="咸鱼１队简介，我们需要最帅的40人来", competition_id=1)
+    team2 = Team(master_id=2, teamname="咸鱼队2", need=50, info="咸鱼２队简介，我们需要最帅的50人来", competition_id=1)
+    team3 = Team(master_id=3, teamname="咸鱼队3", need=105, info="咸鱼３队简介，我们需要最帅的105人来", competition_id=1)
+    team4 = Team(master_id=4, teamname="咸鱼队4", need=104, info="咸鱼４队简介，我们需要最帅的104人来", competition_id=2)
+    team5 = Team(master_id=5, teamname="咸鱼队5", need=108, info="咸鱼５队简介，我们需要最帅的108人来", competition_id=2)
+    team6 = Team(master_id=6, teamname="咸鱼队6", need=110, info="咸鱼６队简介，我们需要最帅的110人来", competition_id=2)
+    team11 = Team(master_id=1, teamname="咸鱼队11", need=40, info="咸鱼１队简介，我们需要最帅的40人来", competition_id=3)
+    team22 = Team(master_id=2, teamname="咸鱼队22", need=50, info="咸鱼２队简介，我们需要最帅的50人来", competition_id=3)
+    team33 = Team(master_id=3, teamname="咸鱼队33", need=105, info="咸鱼３队简介，我们需要最帅的105人来", competition_id=3)
+    team44 = Team(master_id=4, teamname="咸鱼队44", need=104, info="咸鱼４队简介，我们需要最帅的104人来", competition_id=1)
+    team55 = Team(master_id=5, teamname="咸鱼队55", need=108, info="咸鱼５队简介，我们需要最帅的108人来", competition_id=2)
+    team66 = Team(master_id=6, teamname="咸鱼队66", need=110, info="咸鱼６队简介，我们需要最帅的110人来", competition_id=3)
     db.session.add(user1)
     db.session.add(user2)
     db.session.add(user3)
@@ -259,7 +309,12 @@ if __name__ == "__main__":
     db.session.add(team4)
     db.session.add(team5)
     db.session.add(team6)
-    db.session.commit()
+    db.session.add(team11)
+    db.session.add(team22)
+    db.session.add(team33)
+    db.session.add(team44)
+    db.session.add(team55)
+    db.session.add(team66)
     col1 = Cptcol(competition_id=1,user_id=1)
     col2 = Cptcol(competition_id=1,user_id=2)
     col3 = Cptcol(competition_id=1,user_id=3)
@@ -273,5 +328,67 @@ if __name__ == "__main__":
     db.session.add(col5)
     db.session.add(col6)
     db.session.commit()
-    
+
+act1 = Activity(title='活动我是活动1', content="活动内容内容内容"
+                                         "<img src=\"http://188888888.xyz:5000/static/photo/12.png\"/>　活动内容内容内容　"
+                                         "<img src=\"http://188888888.xyz:5000/static/photo/123.jpg\"/>活动"
+                                         "内容内容内容　", num_of_view=12, author="lmp")
+act2 = Activity(title='活动我是活动2', content="活动内容内容内容"
+                                         "<img src=\"http://188888888.xyz:5000/static/photo/8.jpeg\"/>　活动内容内容内容　"
+                                         "<img src=\"http://188888888.xyz:5000/static/photo/123.jpg\"/>活动"
+                                         "内容内容内容　", num_of_view=12, author="cyj")
+act3 = Activity(title='活动我是活动3', content="活动内容内容内容"
+                                         "<img src=\"http://188888888.xyz:5000/static/photo/12.png\"/>　活动内容内容内容　"
+                                         "<img src=\"http://188888888.xyz:5000/static/photo/12.png\"/>活动"
+                                         "内容内容内容　", num_of_view=12, author='lzk')
+act4 = Activity(title='活动我是活动4', content="活动内容内容内容"
+                                         "<img src=\"http://188888888.xyz:5000/static/photo/123.jpg\"/>　活动内容内容内容　"
+                                         "<img src=\"http://188888888.xyz:5000/static/photo/12.png\"/>活动"
+                                         "内容内容内容　", num_of_view=12, author='abc')
+
+acl1 = Actcol(activity_id=1, user_id=1)
+acl2 = Actcol(activity_id=1, user_id=2)
+acl3 = Actcol(activity_id=1, user_id=3)
+acl4 = Actcol(activity_id=2, user_id=4)
+acl5 = Actcol(activity_id=2, user_id=5)
+acl6 = Actcol(activity_id=2, user_id=6)
+
+comment1 = Comment(content="我现在在测试就像个傻逼一样，不想评论你一次。。。", user_id=1,
+                   activity_id=1)
+comment2 = Comment(content="我现在在测试就像个傻逼一样，不想评论你两次。。。", user_id=1,
+                   activity_id=1)
+comment3 = Comment(content="我现在在测试就像个傻逼一样，不想评论你,我是用户２，这是活动１。。。", user_id=2,
+                   activity_id=1)
+comment4 = Comment(content="我现在在测试就像个傻逼一样，不想评论你，我是用户３。这是活动１。。", user_id=3,
+                   activity_id=1)
+comment5 = Comment(content="我现在在测试就像个傻逼一样，不想评论你，我是用户４。。这是活动１。", user_id=4,
+                   activity_id=1)
+comment6 = Comment(content="我现在在测试就像个傻逼一样，不想评论你,这是活动２，我是用户１。。。", user_id=1,
+                   activity_id=2)
+comment7 = Comment(content="我现在在测试就像个傻逼一样，不想评论你。。。", user_id=5,
+                   activity_id=2)
+comment8 = Comment(content="我现在在测试就像个傻逼一样，不想评论你。。。", user_id=6,
+                   activity_id=2)
+comment9 = Comment(content="我现在在测试就像个傻逼一样，不想评论你。。。", user_id=2,
+                   activity_id=2)
+
+reply1 = Reply(sender_id=6, recipient_id=1, content="我现在就不想回复你个傻逼，测试测个鸡儿，?", comment_id=1)
+reply2 = Reply(sender_id=2, recipient_id=1, content="我现在就不想回复你个傻逼，测试测个鸡儿，??", comment_id=1)
+reply3 = Reply(sender_id=3, recipient_id=1, content="我现在就不想回复你个傻逼，测试测个鸡儿，???", comment_id=1)
+reply4 = Reply(sender_id=4, recipient_id=1, content="我现在就不想回复你个傻逼，测试测个鸡儿，????", comment_id=1)
+reply5 = Reply(sender_id=5, recipient_id=1, content="我现在就不想回复你个傻逼，测试测个鸡儿，?????", comment_id=1)
+reply6 = Reply(sender_id=2, recipient_id=1, content="我现在就不想回复你个傻逼，测试测个鸡儿，??????", comment_id=1)
+reply11 = Reply(sender_id=6, recipient_id=1, content="我现在就不想回复你个傻逼，测试测个鸡儿，?", comment_id=2)
+reply22 = Reply(sender_id=2, recipient_id=1, content="我现在就不想回复你个傻逼，测试测个鸡儿，??", comment_id=3)
+reply33 = Reply(sender_id=3, recipient_id=1, content="我现在就不想回复你个傻逼，测试测个鸡儿，???", comment_id=2)
+reply44 = Reply(sender_id=4, recipient_id=1, content="我现在就不想回复你个傻逼，测试测个鸡儿，????", comment_id=5)
+reply55 = Reply(sender_id=5, recipient_id=1, content="我现在就不想回复你个傻逼，测试测个鸡儿，?????", comment_id=4)
+reply66 = Reply(sender_id=6, recipient_id=1, content="我现在就不想回复你个傻逼，测试测个鸡儿，??????", comment_id=1)
+
+db.session.add_all([act1, act2, act3, act4, acl1, acl2, acl3, acl4, acl5, acl6,
+                    comment1, comment2, comment3, comment4, comment5, comment6,
+                    comment7, comment8, comment9,
+                    reply1, reply2, reply3, reply4, reply5, reply6, reply11, reply22,
+                    reply33, reply44, reply55, reply66])
+db.session.commit()
 """

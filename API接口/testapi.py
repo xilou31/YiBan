@@ -117,6 +117,11 @@ def CptDetail():
             collection = 1  # 已经收藏
 
     com = Competition.query.get(id)  # 找到对应的表
+    if com == None:
+        data = {"msg": "could not find this compete id"}
+        payload = json.dumps(data)
+        return payload, 400
+
     title = com.title  # 竞赛表的标题
     content = com.content  # 竞赛表的内容
     time = com.create_time.strftime('%Y-%m-%d %H:%M:%S')  # 竞赛表的发布时间
@@ -144,6 +149,83 @@ def CptDetail():
 
     payload = json.dumps(data)
     return payload, 200
+
+
+# 活动内容详情
+@app.route("/activity/detail", methods=["GET", "POST"])
+def ActDetail():
+    id = request.form.get('id')  # 获取活动的内容id
+    user_id = request.form.get('userid')  # 获取用户的id
+    if user_id == '-1':  # 如果未登录，则将收藏设置为-1
+        collection = -1
+    else:  # 在收藏活动的表中查找用户名和文章id是否关联
+        a = Actcol.query.filter(Actcol.user_id == user_id, Actcol.activity_id == id).first()
+        if a == None:
+            collection = -1  # 未收藏
+        else:
+            collection = 1  # 已经收藏
+
+    act = Activity.query.get(id)  # 找到对应的活动表
+    if act == None:
+        data = {"msg": "could not find this activity id"}
+        payload = json.dumps(data)
+        return payload, 400
+
+    title = act.title  # 活动表的标题
+    content = act.content  # 活动表的内容
+    time = act.create_time.strftime('%Y-%m-%d %H:%M:%S')  # 活动表的发布时间
+    pageviews = act.num_of_view  # 活动的浏览次数
+    author = act.author  # 活动的发布者
+
+    '''评论'''
+    payload = []
+    contentss = {}
+    cs = act.comments
+    for c in cs:
+        comid = c.id  # 评论表的id
+        comauthor = User.query.get(c.user_id).username  # 评论者的名字
+        comauthorface = User.query.get(c.user_id).face  # 评论者的头像
+        comcontent = c.content  # 评论的内容
+        comtime = c.addtime.strftime('%Y-%m-%d %H:%M:%S')  # 评论的时间
+        replys = c.replys
+        num = 0
+        for reply in replys:
+            num = num + 1
+        contentss = {'id': comid, 'author': comauthor, 'avatar': comauthorface,
+                     'content': comcontent, 'time': comtime, "number": num}
+        payload.append(contentss)
+        contentss = {}
+    data = {"title": title, "content": content, "time": time, "pageviews": pageviews, "author": author,
+            "collection": collection, "comments": payload}
+
+    payload = json.dumps(data)
+    return payload, 200
+
+
+# 获取某条评论的回复
+@app.route("/activity/reply",methods=["GET", "POST"])
+def CommentReply():
+    id = request.form.get('id')  # 获取评论的内容id
+    if id == None:
+        pass
+    else:
+        payload = []
+        contentss = {}
+        replys = Comment.query.get(id).replys
+        for reply in replys:
+            senderid = reply.sender_id  # 发送者的id
+            sendername = User.query.get(reply.sender_id).username  # 回复者的名字
+            senderface = User.query.get(reply.sender_id).face  # 回复者的头像
+            recipient = User.query.get(reply.recipient_id).username  # 接收者的名字(也许有用)
+            content = reply.content  # 回复的内容
+            time = reply.addtime.strftime('%Y-%m-%d %H:%M:%S')  # 回复的时间
+            contentss = {'authorid': senderid, 'author': sendername, "senderface": senderface,
+                         'recipient': recipient, 'content': content, 'time': time}
+            payload.append(contentss)
+            contentss = {}
+        data = {"reply": payload}
+        payload = json.dumps(data)
+        return payload, 200
 
 
 # 竞赛搜索
@@ -220,10 +302,6 @@ def index1212(id):
     pass
 
 
-# 获取品论
-@app.route("/blog/author/<int:id>/comment")
-def index2212(id):
-    pass
 
 
 # 评论博客
