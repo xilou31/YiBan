@@ -156,6 +156,12 @@ def CptDetail():
 def ActDetail():
     id = request.form.get('id')  # 获取活动的内容id
     user_id = request.form.get('userid')  # 获取用户的id
+    act = Activity.query.get(id)  # 找到对应的活动表
+    if act == None:
+        data = {"msg": "could not find this activity id"}
+        payload = json.dumps(data)
+        return payload, 400
+
     if user_id == '-1':  # 如果未登录，则将收藏设置为-1
         collection = -1
     else:  # 在收藏活动的表中查找用户名和文章id是否关联
@@ -164,12 +170,6 @@ def ActDetail():
             collection = -1  # 未收藏
         else:
             collection = 1  # 已经收藏
-
-    act = Activity.query.get(id)  # 找到对应的活动表
-    if act == None:
-        data = {"msg": "could not find this activity id"}
-        payload = json.dumps(data)
-        return payload, 400
 
     title = act.title  # 活动表的标题
     content = act.content  # 活动表的内容
@@ -180,21 +180,23 @@ def ActDetail():
     '''评论'''
     payload = []
     contentss = {}
-    cs = act.comments
+    cs = act.replys
     for c in cs:
-        comid = c.id  # 评论表的id
-        comauthor = User.query.get(c.user_id).username  # 评论者的名字
-        comauthorface = User.query.get(c.user_id).face  # 评论者的头像
-        comcontent = c.content  # 评论的内容
-        comtime = c.addtime.strftime('%Y-%m-%d %H:%M:%S')  # 评论的时间
-        replys = c.replys
-        num = 0
-        for reply in replys:
-            num = num + 1
-        contentss = {'id': comid, 'author': comauthor, 'avatar': comauthorface,
-                     'content': comcontent, 'time': comtime, "number": num}
-        payload.append(contentss)
-        contentss = {}
+        if c.type == 1:
+            comid = c.id  # 评论表的id
+            comauthor = User.query.get(c.sender_id).username  # 评论者的名字
+            comauthorid = User.query.get(c.sender_id).id  # 评论者的id
+            comauthorface = User.query.get(c.sender_id).face  # 评论者的头像
+            comcontent = c.content  # 评论的内容
+            comtime = c.addtime.strftime('%Y-%m-%d %H:%M:%S')  # 评论的时间
+            replyss = Reply.query.filter_by(comment_id=comid).all()
+            num = 0
+            for reply in replyss:
+                num = num + 1
+            contentss = {'id': comid, 'author': comauthor, 'avatar': comauthorface,
+                         'content': comcontent, 'time': comtime, "number": num, "user_id": comauthorid}
+            payload.append(contentss)
+            contentss = {}
     data = {"title": title, "content": content, "time": time, "pageviews": pageviews, "author": author,
             "collection": collection, "comments": payload}
 
@@ -202,75 +204,51 @@ def ActDetail():
     return payload, 200
 
 
-# 获取某条评论的回复
-@app.route("/activity/reply",methods=["GET", "POST"])
+# 获取回复
+@app.route("/reply", methods=["GET", "POST"])
 def CommentReply():
-    id = request.form.get('id')  # 获取评论的内容id
+    id = request.form.get('id')  # 获取要查看的id
     if id == None:
         pass
     else:
         payload = []
         contentss = {}
-        replys = Comment.query.get(id).replys
-        for reply in replys:
-            senderid = reply.sender_id  # 发送者的id
-            sendername = User.query.get(reply.sender_id).username  # 回复者的名字
-            senderface = User.query.get(reply.sender_id).face  # 回复者的头像
-            recipient = User.query.get(reply.recipient_id).username  # 接收者的名字(也许有用)
-            content = reply.content  # 回复的内容
-            time = reply.addtime.strftime('%Y-%m-%d %H:%M:%S')  # 回复的时间
-            contentss = {'authorid': senderid, 'author': sendername, "senderface": senderface,
-                         'recipient': recipient, 'content': content, 'time': time}
+        replys = Reply.query.filter_by(comment_id=id).all()  # 获取当前评论id的回复者们
+        for reply in replys:  # 从回复者们分别打印每个回复者的信息以及 回复者的回复被回复的次数
+            replyid = reply.id  # 回复的表的id
+            sender_id = reply.sender_id  # 发送者的id
+            face = User.query.get(reply.sender_id).face  # 发送者的头像
+            name = User.query.get(reply.sender_id).username  # 发送者的名字
+            content = reply.content  # 内容
+            replyids = reply.id  # 子节点的回复
+            comtime = reply.addtime.strftime('%Y-%m-%d %H:%M:%S')  # 回复的时间
+            getreplys = Reply.query.filter_by(comment_id=replyids).all()
+            num = 0
+            for getreply in getreplys:
+                num = num + 1
+            contentss = {'id': replyid, 'author': name, 'avatar': face,
+                         'content': content, 'time': comtime, "number": num, "user_id": sender_id}
             payload.append(contentss)
             contentss = {}
-        data = {"reply": payload}
+        data = {"comments": payload}
         payload = json.dumps(data)
         return payload, 200
 
 
-# 竞赛搜索
-@app.route("/home/searchcp")
-def HomeSearchcp():
-    pass
-
-
-# 活动搜索
-@app.route("/home/searchat")
-def HomeSearchat():
-    pass
-
-
-# 收藏竞赛接口
-@app.route("/compete/collection")
-def CpCollection():
-    pass
-
-
-# 获取个人资料
-@app.route("/user/data")
-def UserData():
-    pass
-
-
-# 修改个人资料
-@app.route("/user/edit")
-def UserEdit():
-    pass
-
-
 # 社区首页接口
 @app.route("/community", methods=["GET", "POST"])
-def index121():
+def Community():
     if request.method == 'POST' and request.form.get('sort') == '0':
         # 默认是时间顺序排列，直接ｇｅｔ和ｐｏｓｔ上来的不是０的时候，就时间排序，
         A = Blog.query.order_by(Blog.num_of_view.desc()).all()  # desc()是从大到小，没有desc就是从小到大
         payload = []
         content = {}
         for AA in A:
+            name = User.query.get(AA.user_id).username
             datetime = AA.create_time
             time = datetime.strftime('%Y-%m-%d %H:%M:%S')
             content = {'id': AA.id, 'title': AA.title, 'author': AA.user_id, 'pageviews': AA.num_of_view,
-                       'time': time}
+                       'time': time, "name": name}
             payload.append(content)
             content = {}
         data = {"data": payload}
@@ -283,10 +261,11 @@ def index121():
         payload = []
         content = {}
         for AA in A:
+            name = User.query.get(AA.user_id).username
             datetime = AA.create_time
             time = datetime.strftime('%Y-%m-%d %H:%M:%S')
             content = {'id': AA.id, 'title': AA.title, 'author': AA.user_id, 'pageviews': AA.num_of_view,
-                       'time': time}
+                       'time': time, "name": name}
             payload.append(content)
             content = {}
         data = {"data": payload}
@@ -295,14 +274,98 @@ def index121():
 
 
 """
+用户的ｉｄ和博客的ｉｄ
+用户的ｉｄ来查看是否与博客的作者关注
+用户的ｉｄ来查看是否与博客收藏
+博客的ｉｄ用来返回　文章内容　标题　作者头像　作者用户名　浏览次数　发布时间　评论的内容　　
+"""
+
 
 # 获取博客的详情
-@app.route("/blog/author/<int:id>")
-def index1212(id):
+@app.route("/blog/detail", methods=["GET", "POST"])
+def BlogDe():
+    id = request.form.get('id')  # 获取博客的的内容id
+    user_id = request.form.get('userid')  # 获取用户的id
+
+    blog = Blog.query.get(id)  # 找到对应的博客表
+    if blog == None:
+        data = {"msg": "could not find this blog id"}
+        payload = json.dumps(data)
+        return payload, 400
+
+    if user_id == '-1':  # 如果未登录，则将收藏设置为-1,则将关注设置为-1
+        collection = -1
+        follow = -1
+    else:  # 在收藏博客的表中查找用户名和文章id是否关联
+        a = Blogcol.query.filter(Blogcol.user_id == user_id, Blogcol.blog_id == id).first()
+        b = Follow.query.filter(Follow.follower_id == user_id, Follow.followed_id == blog.user_id).first()
+        if a == None:
+            collection = -1  # 未收藏
+        else:
+            collection = 1  # 已经收藏
+        if b == None:
+            follow = -1  # 则将收藏设置为-1
+        else:
+            follow = 1  # 则将收藏设置为1
+
+    title = blog.title  # 博客表的标题
+    content = blog.content  # 博客表的内容
+    time = blog.create_time.strftime('%Y-%m-%d %H:%M:%S')  # 博客表的发布时间
+    pageviews = blog.num_of_view  # 博客的浏览次数
+    author = User.query.get(blog.user_id).username  # 博客的发布者
+    face = User.query.get(blog.user_id).face  # 发布者的头像
+
+    '''评论'''
+    payload = []
+    contentss = {}
+    cs = blog.replys
+    for c in cs:
+        if c.type == 1:
+            comid = c.id  # 评论表的id
+            comauthor = User.query.get(c.sender_id).username  # 评论者的名字
+            comauthorid = User.query.get(c.sender_id).id  # 评论者的id
+            comauthorface = User.query.get(c.sender_id).face  # 评论者的头像
+            comcontent = c.content  # 评论的内容
+            comtime = c.addtime.strftime('%Y-%m-%d %H:%M:%S')  # 评论的时间
+            replyss = Reply.query.filter_by(comment_id=comid).all()
+            num = 0
+            for reply in replyss:
+                num = num + 1
+            contentss = {'id': comid, 'author': comauthor, 'avatar': comauthorface,
+                         'content': comcontent, 'time': comtime, "number": num, "user_id": comauthorid}
+            payload.append(contentss)
+            contentss = {}
+    data = {"title": title, "content": content, "time": time, "pageviews": pageviews, "author": author,
+            "collection": collection, "comments": payload}
+
+    payload = json.dumps(data)
+    return payload, 200
+
+
+# 搜索
+@app.route("/searchcp")
+def HomeSearchcp():
     pass
 
 
+# 收藏竞赛接口
+@app.route("/compete/collection")
+def CpCollection():
+    pass
 
+
+"""
+
+# 获取个人资料
+@app.route("/user/data")
+def UserData():
+    pass
+
+
+# 修改个人资料
+@app.route("/user/edit")
+def UserEdit():
+    pass
 
 # 评论博客
 @app.route("/blog/author/<int:id>")

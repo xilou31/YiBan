@@ -44,7 +44,6 @@ class User(db.Model):
     face = db.Column(db.String(255))  # 头像
     addtime = db.Column(db.DateTime, index=True, default=datetime.now)  # 注册时间
 
-    comments = db.relationship('Comment', backref='user')  # 评论外键关系关联
     team = db.relationship('Team', backref='user')  # 组队外键关系关联.
     blogcol = db.relationship('Blogcol', backref='user')  # 博客收藏外键关系关联
     search = db.relationship('Search', backref='user')  # 搜索历史外键关系关联
@@ -85,9 +84,8 @@ class Blog(db.Model):
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'))  # 所属用户
     create_time = db.Column(db.DateTime, index=True, default=datetime.now)  # 添加时间
     num_of_view = db.Column(db.Integer, default=0)  # 浏览次数
-    face = db.Column(db.String(255))  # 头像的地址
     commentnum = db.Column(db.BigInteger)  # 评论量
-    comments = db.relationship('Comment', backref='blog')  # 评论外键关系关联
+    replys = db.relationship('Reply', backref='blog')  # 评论外键关系关联
     blogcol = db.relationship('Blogcol', backref='blog')  # 博客收藏外键关系关联
 
     def __repr__(self):
@@ -115,9 +113,8 @@ class Activity(db.Model):
     content = db.Column(db.Text)  # 内容
     author = db.Column(db.String(100))  # 作者
     num_of_view = db.Column(db.Integer, default=0)  # 浏览次数
-    # commentnum = db.Column(db.BigInteger)  # 评论量
     create_time = db.Column(db.DateTime, index=True, default=datetime.now)  # 添加时间
-    comments = db.relationship('Comment', backref='activity')  # 评论外键关系关联
+    replys = db.relationship('Reply', backref='activity')  # 评论外键关系关联
     actcol = db.relationship('Actcol', backref='activity')  # 博客收藏外键关系关联
 
 
@@ -133,29 +130,17 @@ class Team(db.Model):
     create_time = db.Column(db.DateTime, index=True, default=datetime.now)  # 添加时间
 
 
-# 评论
-class Comment(db.Model):
-    __tablename__ = "comment"
-    id = db.Column(db.Integer, primary_key=True)  # 编号
-    content = db.Column(db.Text)  # 内容
-    blog_id = db.Column(db.Integer, db.ForeignKey('blog.id'))  # 所属博客
-    user_id = db.Column(db.Integer, db.ForeignKey('user.id'))  # 所属用户
-    activity_id = db.Column(db.Integer, db.ForeignKey('activity.id'))  # 所属活动
-    addtime = db.Column(db.DateTime, index=True, default=datetime.now)  # 添加时间
-    replys = db.relationship('Reply', backref='comment')  # 评论外键关系关联
-
-    def __repr__(self):
-        return "<Comment %r>" % self.id
-
-
-# 回复评论
+# 回复及评论
 class Reply(db.Model):
     __tablename__ = "reply"
     id = db.Column(db.Integer, primary_key=True)  # 编号
+    comment_id = db.Column(db.Integer)  # 评论对象
     sender_id = db.Column(db.Integer, db.ForeignKey('user.id'))  # 发送者
     recipient_id = db.Column(db.Integer, db.ForeignKey('user.id'))  # 接收者
     content = db.Column(db.TEXT)  # 回复内容
-    comment_id = db.Column(db.Integer, db.ForeignKey('comment.id'))  # 所属评论
+    type = db.Column(db.Integer)  # 类型，1是评论，2是回复
+    blog_id = db.Column(db.Integer, db.ForeignKey('blog.id'))  # 所属博客
+    activity_id = db.Column(db.Integer, db.ForeignKey('activity.id'))  # 所属活动
     addtime = db.Column(db.DateTime, index=True, default=datetime.now)  # 添加时间
 
 
@@ -225,170 +210,134 @@ class Follow(db.Model):
 
 
 if __name__ == "__main__":
-
-    pass
-
-"""
+    # db.drop_all()
+    # follow1 = Follow(follower_id=1,followed_id=2)
+    # follow2 = Follow(follower_id=2, followed_id=3)
+    # follow3 = Follow(follower_id=3, followed_id=4)
+    # follow4 = Follow(follower_id=4, followed_id=5)
+    # follow5 = Follow(follower_id=5,followed_id=6)
+    # follow6 = Follow(follower_id=6, followed_id=1)
+    # db.session.add_all([follow1,follow2,follow3,follow4,follow5,follow6])
+    # db.session.commit()
     db.create_all()
+    #
+    # user1 = User(username="lmp", pwd='123456', sex=1, email='382552192@qq.com', phone=123456789, school="hnnydx",
+    #              level="大二", face="/static/photo/8.jpeg")
+    # user2 = User(username="lzk", pwd='12345622', sex=2, email='382552192s22@qq.com', phone=123, school="hnnydx222",
+    #              level="大一", face="/static/photo/123.jpg")
+    # user3 = User(username="abc", pwd='123456', sex=1, email='3825521sdas92@qq.com', phone=123489, school="hnnsdsasydx",
+    #              level="大二", face="/static/photo/12.png")
+    # user4 = User(username="lhb", pwd='12345622', sex=2, email='3825521s9sdas222@qq.com', phone=1234522222,
+    #              school="hnnydxss222",
+    #              level="大一", face="/static/photo/12.png")
+    # user5 = User(username="cyj", pwd='123456', sex=1, email='382552s1sdas92@qq.com', phone=1234829,
+    #              school="hnnsdsasydx",
+    #              level="大二", face="/static/photo/123.jpg")
+    # user6 = User(username="qxj", pwd='12345622', sex=2, email='38255219dsdas222@qq.com', phone=12345422222,
+    #              school="hnnydxss222",
+    #              level="大一", face="/static/photo/8.jpeg")
+    #
+    # db.session.add(user1)
+    # db.session.add(user2)
+    # db.session.add(user3)
+    # db.session.add(user4)
+    # db.session.add(user5)
+    # db.session.add(user6)
+    #
+    # act1 = Activity(title='活动我是活动1', content="活动内容内容内容"
+    #                                          "<img src=\"http://188888888.xyz:5000/static/photo/12.png\"/>　活动内容内容内容　"
+    #                                          "<img src=\"http://188888888.xyz:5000/static/photo/123.jpg\"/>活动"
+    #                                          "内容内容内容　", num_of_view=12, author="lmp")
+    # act2 = Activity(title='活动我是活动2', content="活动内容内容内容"
+    #                                          "<img src=\"http://188888888.xyz:5000/static/photo/8.jpeg\"/>　活动内容内容内容　"
+    #                                          "<img src=\"http://188888888.xyz:5000/static/photo/123.jpg\"/>活动"
+    #                                          "内容内容内容　", num_of_view=12, author="cyj")
+    # act3 = Activity(title='活动我是活动3', content="活动内容内容内容"
+    #                                          "<img src=\"http://188888888.xyz:5000/static/photo/12.png\"/>　活动内容内容内容　"
+    #                                          "<img src=\"http://188888888.xyz:5000/static/photo/12.png\"/>活动"
+    #                                          "内容内容内容　", num_of_view=12, author='lzk')
+    # act4 = Activity(title='活动我是活动4', content="活动内容内容内容"
+    #                                          "<img src=\"http://188888888.xyz:5000/static/photo/123.jpg\"/>　活动内容内容内容　"
+    #                                          "<img src=\"http://188888888.xyz:5000/static/photo/12.png\"/>活动"
+    #                                          "内容内容内容　", num_of_view=12, author='abc')
+    #
+    # acl1 = Actcol(activity_id=1, user_id=1)
+    # acl2 = Actcol(activity_id=1, user_id=2)
+    # acl3 = Actcol(activity_id=1, user_id=3)
+    # acl4 = Actcol(activity_id=2, user_id=4)
+    # acl5 = Actcol(activity_id=2, user_id=5)
+    # acl6 = Actcol(activity_id=2, user_id=6)
+    #
+    # comment1 = Reply(sender_id=2, content="我是号我评论一号文章1", type=1, activity_id=1)
+    # comment2 = Reply(sender_id=3, content="我是号我评论二号文章2", type=1, activity_id=1)
+    # comment3 = Reply(sender_id=4, content="我是号我评论一号文章3", type=1, activity_id=1)
+    # comment4 = Reply(sender_id=5, content="我是号我评论一号文章4", type=1, activity_id=1)
+    # comment5 = Reply(sender_id=6, content="我是号我评论一号文章5", type=1, activity_id=1)
+    # comment6 = Reply(sender_id=2, content="我是二号我评论一号文章6", type=1, activity_id=1)
+    # comment7 = Reply(sender_id=2, content="我是二号我评论2号文章7", type=1, activity_id=2)
+    # comment8 = Reply(sender_id=2, content="我是二号我评论2号文章8", type=1, activity_id=2)
+    # comment9 = Reply(sender_id=2, content="我是二号我评论2号文章9", type=1, activity_id=2)
+    # comment0 = Reply(sender_id=2, content="我是二号我评论2号文章0", type=1, activity_id=2)
+    #
+    # reply1 = Reply(comment_id=11, sender_id=1, content="我是1号，我在2号发的第一条评论里面，回复了1", type=2)
+    # reply2 = Reply(comment_id=11, sender_id=2, content="我是2号，我在2号发的第一条评论里面，回复了2", type=2)
+    # reply3 = Reply(comment_id=1, sender_id=2, content="我是2号，我在2号发的第一条评论里面，回复了3", type=2)
+    # reply4 = Reply(comment_id=1, sender_id=1, content="我是1号，我在2号发的第一条评论里面，回复了4", type=2)
+    # reply5 = Reply(comment_id=1, sender_id=1, content="我是1号，....我在2号发的第一条评论里面，回复了5", type=2)
+    # reply6 = Reply(comment_id=2, sender_id=3, content="我是2号，我在2号发的第一条评论里面，回复了6", type=2)
+    # db.session.add_all(
+    #     [act1, act2, act3, act4, acl1, acl2, acl3, acl4, acl5, acl6, comment1, comment2, comment3, comment4, comment5,
+    #      comment6, comment7, comment8, comment9, comment0])
+    # db.session.add_all([reply6, reply5, reply4, reply3, reply2, reply1])
+    # db.session.commit()
+    #
+    #
+    # blog1 = Blog(title="博客测试测试？111", content="博客内容测试我是博客内容，我就是博客内容,　我是　1号用户", user_id=1)
+    # blog2 = Blog(title="博客测试测试？222", content="博客内容测试我是博客内容，我就是博客内容,　我是　2号用户", user_id=2)
+    # blog3 = Blog(title="博客测试测试？333", content="博客内容测试我是博客内容，我就是博客内容,　我是　3号用户", user_id=3)
+    # blog4 = Blog(title="博客测试测试？444", content="博客内容测试我是博客内容，我就是博客内容,　我是　4号用户", user_id=4)
+    #
+    # bcol1 = Blogcol(blog_id=1, user_id=1)
+    # bcol2 = Blogcol(blog_id=1, user_id=2)
+    # bcol3 = Blogcol(blog_id=1, user_id=3)
+    # bcol4 = Blogcol(blog_id=2, user_id=4)
+    # bcol5 = Blogcol(blog_id=2, user_id=5)
+    # bcol6 = Blogcol(blog_id=3, user_id=6)
+    #
+    # db.session.add_all(
+    #     [bcol1, bcol2, bcol3, bcol4, bcol5, bcol6, blog1, blog2, blog3, blog4])
+    # db.session.commit()
 
-    user1 = User(username="lmp", pwd='123456', sex=1, email='382552192@qq.com', phone=123456789, school="hnnydx",
-                 level="大二", face="/static/photo/8.jpeg")
-    user2 = User(username="lzk", pwd='12345622', sex=2, email='382552192s22@qq.com', phone=123, school="hnnydx222",
-                 level="大一", face="/static/photo/123.jpg")
-    user3 = User(username="abc", pwd='123456', sex=1, email='3825521sdas92@qq.com', phone=123489, school="hnnsdsasydx",
-                 level="大二", face="/static/photo/12.png")
-    user4 = User(username="lhb", pwd='12345622', sex=2, email='3825521s9sdas222@qq.com', phone=1234522222,
-                 school="hnnydxss222",
-                 level="大一", face="/static/photo/12.png")
-    user5 = User(username="cyj", pwd='123456', sex=1, email='382552s1sdas92@qq.com', phone=1234829,
-                 school="hnnsdsasydx",
-                 level="大二", face="/static/photo/123.jpg")
-    user6 = User(username="qxj", pwd='12345622', sex=2, email='38255219dsdas222@qq.com', phone=12345422222,
-                 school="hnnydxss222",
-                 level="大一", face="/static/photo/8.jpeg")
-    cop1 = Competition(title="竞赛标题测试１", content="竞赛内容测试１竞赛内容测试１竞赛内容测试１竞赛内容测试１竞赛内容测试１竞赛内容测试１"
-                                                "竞赛内容测试１竞赛内容测试１竞赛内容测试１竞赛内容测试１竞赛内容测试１"
-                                                "竞赛内容测试１竞赛内容测试１竞赛内容测试１竞赛内容测试１竞赛内容测试１竞赛内容测试１"
-                                                "<img src=\"http://188888888.xyz:5000/static/photo/8.jpeg\"/>" 
-                                                "竞赛内容测试１竞赛内容测试１竞赛内容测试１竞赛内容测试１竞赛内容测试１竞赛内容测试１"
-                                                "竞赛内容测试１竞赛内容测试１竞赛内容测试１竞赛内容测试１竞赛内容测试１", author="网站发布人1")
-    cop2 = Competition(title="竞赛标题测试２", content="竞赛内容测试2竞赛内容测试2竞赛内容测试2竞赛内容测试2竞赛内容测试2竞赛内容测试2竞赛"
-                                                "内容测试2竞赛内容测试2竞赛内容测试2竞赛内容测试2竞赛内容测试2竞赛内容测试2竞赛内容测试2"
-                                                "竞赛内容测试2竞赛内容测试2竞赛内容测试2竞赛内容测试2竞赛内容测试2竞赛内容测试2竞赛内容"
-                                                "<img src=\"http://188888888.xyz:5000/static/photo/123.jpg\"/>"
-                                                "测试2竞赛内容测试2竞赛内容测试2竞赛内容测试2竞赛内容测试2竞赛内容测试2竞赛内容测试2竞赛"
-                                                "内容测试2竞赛内容测试2竞赛内容测试2竞赛内容测试2", author="网站发布人2")
-    cop3 = Competition(title="竞赛标题测试3", content="竞赛内容测试竞赛内容测试竞赛内容测试竞赛内容测试竞赛内容测试竞赛内容测试竞赛内容测试"
-                                                "<img src=\"http://188888888.xyz:5000/static/photo/12.png\"/>"
-                                                "竞赛内容测试竞赛内容测试竞赛内容测试竞赛内容测试竞赛内容测试竞赛内容测试竞赛内容测试竞赛"
-                                                "内容测试竞赛内容测试竞赛内容测试竞赛内容测试竞赛内容测试竞赛内容测"
-                                                "试竞赛内容测试", author="网站发布人3")
-    cop4 = Competition(title="竞赛标题测试4", content="竞赛内容测试4竞赛内容测试竞赛内容测试竞赛内容测试竞赛内容测试竞赛内容测试竞赛内容测"
-                                                "<img src=\"http://188888888.xyz:5000/static/photo/123.jpg\"/>"
-                                                "试竞赛内容测试竞赛内容测试竞赛内容测试竞赛内容测试竞赛内容测试竞赛内容测试竞赛内容测"
-                                                "试竞赛内容测试竞赛内容测试竞赛内容测试竞赛内容测试竞赛内容测试竞赛内容测试竞赛内容"
-                                                "测试竞赛内容测试", author="网站发布人4")
-    cop5 = Competition(title="竞赛标题测试5", content="竞赛内容测试5竞赛内容测试竞赛内容测试竞赛内容测试竞赛内容测试竞赛内容测试竞赛内容测"
-                                                "<img src=\"http://188888888.xyz:5000/static/photo/123.jpg\"/>"
-                                                "试竞赛内容测试竞赛内容测试竞赛内容测试竞赛内容测试竞赛内容测试竞赛内容测试竞赛内容测试竞"
-                                                "赛内容测试竞赛内容测试竞赛内容测试竞赛内容测试竞赛内容测试竞赛内"
-                                                "容测试竞赛内容测试竞赛内容测试", author="网站发布人5")
-    cop6 = Competition(title="竞赛标题测试6", content="竞赛内容测试6竞赛内容测试竞赛内容测试竞赛内容测试竞赛内容测试竞赛内容测试竞赛内容测试"
-                                                "竞赛内容测试竞赛内容测试竞赛内容测试竞赛内容测试竞赛内容测试竞赛内容测试竞赛内容测"
-                                                "试竞赛内容测试竞赛内容测试竞赛内容测试竞赛内容测试竞赛内容测试竞赛内容测"
-                                                "<img src=\"http://188888888.xyz:5000/static/photo/123.jpg\"/>"
-                                                "试竞赛内容测试竞赛内容测试", author="网站发布人6")
+    # comment1 = Reply(sender_id=2, content="我是号我评论一号文章1", type=1, blog_id=1)
+    # comment2 = Reply(sender_id=3, content="我是号我评论二号文章2", type=1, blog_id=2)
+    # comment3 = Reply(sender_id=4, content="我是号我评论一号文章3", type=1, blog_id=1)
+    # comment4 = Reply(sender_id=5, content="我是号我评论一号文章4", type=1, blog_id=1)
+    # comment5 = Reply(sender_id=6, content="我是号我评论一号文章5", type=1, blog_id=1)
+    # comment6 = Reply(sender_id=2, content="我是二号我评论一号文章6", type=1, blog_id=1)
+    # comment7 = Reply(sender_id=2, content="我是二号我评论2号文章7", type=1, blog_id=2)
+    # comment8 = Reply(sender_id=2, content="我是二号我评论2号文章8", type=1, blog_id=2)
+    # comment9 = Reply(sender_id=2, content="我是二号我评论2号文章9", type=1, blog_id=2)
+    # comment0 = Reply(sender_id=2, content="我是二号我评论2号文章0", type=1, blog_id=2)
+    # comment11 = Reply(sender_id=2, content="我是号我评论一号文章1", type=1, blog_id=1)
+    # comment22 = Reply(sender_id=3, content="我是号我评论二号文章2", type=1, blog_id=2)
+    # comment33 = Reply(sender_id=4, content="我是号我评论一号文章3", type=1, blog_id=1)
+    # comment44 = Reply(sender_id=5, content="我是号我评论一号文章4", type=1, blog_id=1)
+    # comment55 = Reply(sender_id=6, content="我是号我评论一号文章5", type=1, blog_id=1)
+    # comment66 = Reply(sender_id=2, content="我是二号我评论一号文章6", type=1, blog_id=1)
+    # comment77 = Reply(sender_id=2, content="我是二号我评论2号文章7", type=1, blog_id=2)
+    # comment88 = Reply(sender_id=2, content="我是二号我评论2号文章8", type=1, blog_id=2)
+    # comment99 = Reply(sender_id=2, content="我是二号我评论2号文章9", type=1, blog_id=2)
+    # comment00 = Reply(sender_id=2, content="我是二号我评论2号文章0", type=1, blog_id=2)
+    # db.session.add_all([comment1,comment2,comment3,comment4,comment5,comment6,comment7,comment8,
+    #                     comment9,comment0,comment11,comment22,comment33,comment44,comment55,comment66,
+    #                     comment77,comment88,comment99,comment00])
+    # db.session.commit()
 
-    team1 = Team(master_id=1, teamname="咸鱼队1", need=40, info="咸鱼１队简介，我们需要最帅的40人来", competition_id=1)
-    team2 = Team(master_id=2, teamname="咸鱼队2", need=50, info="咸鱼２队简介，我们需要最帅的50人来", competition_id=1)
-    team3 = Team(master_id=3, teamname="咸鱼队3", need=105, info="咸鱼３队简介，我们需要最帅的105人来", competition_id=1)
-    team4 = Team(master_id=4, teamname="咸鱼队4", need=104, info="咸鱼４队简介，我们需要最帅的104人来", competition_id=2)
-    team5 = Team(master_id=5, teamname="咸鱼队5", need=108, info="咸鱼５队简介，我们需要最帅的108人来", competition_id=2)
-    team6 = Team(master_id=6, teamname="咸鱼队6", need=110, info="咸鱼６队简介，我们需要最帅的110人来", competition_id=2)
-    team11 = Team(master_id=1, teamname="咸鱼队11", need=40, info="咸鱼１队简介，我们需要最帅的40人来", competition_id=3)
-    team22 = Team(master_id=2, teamname="咸鱼队22", need=50, info="咸鱼２队简介，我们需要最帅的50人来", competition_id=3)
-    team33 = Team(master_id=3, teamname="咸鱼队33", need=105, info="咸鱼３队简介，我们需要最帅的105人来", competition_id=3)
-    team44 = Team(master_id=4, teamname="咸鱼队44", need=104, info="咸鱼４队简介，我们需要最帅的104人来", competition_id=1)
-    team55 = Team(master_id=5, teamname="咸鱼队55", need=108, info="咸鱼５队简介，我们需要最帅的108人来", competition_id=2)
-    team66 = Team(master_id=6, teamname="咸鱼队66", need=110, info="咸鱼６队简介，我们需要最帅的110人来", competition_id=3)
-    db.session.add(user1)
-    db.session.add(user2)
-    db.session.add(user3)
-    db.session.add(user4)
-    db.session.add(user5)
-    db.session.add(user6)
-    db.session.add(cop1)
-    db.session.add(cop2)
-    db.session.add(cop3)
-    db.session.add(cop4)
-    db.session.add(cop5)
-    db.session.add(cop6)
-    db.session.add(team1)
-    db.session.add(team2)
-    db.session.add(team3)
-    db.session.add(team4)
-    db.session.add(team5)
-    db.session.add(team6)
-    db.session.add(team11)
-    db.session.add(team22)
-    db.session.add(team33)
-    db.session.add(team44)
-    db.session.add(team55)
-    db.session.add(team66)
-    col1 = Cptcol(competition_id=1,user_id=1)
-    col2 = Cptcol(competition_id=1,user_id=2)
-    col3 = Cptcol(competition_id=1,user_id=3)
-    col4 = Cptcol(competition_id=2,user_id=4)
-    col5 = Cptcol(competition_id=2,user_id=5)
-    col6 = Cptcol(competition_id=2,user_id=6)
-    db.session.add(col1)
-    db.session.add(col2)
-    db.session.add(col3)
-    db.session.add(col4)
-    db.session.add(col5)
-    db.session.add(col6)
-    db.session.commit()
-
-act1 = Activity(title='活动我是活动1', content="活动内容内容内容"
-                                         "<img src=\"http://188888888.xyz:5000/static/photo/12.png\"/>　活动内容内容内容　"
-                                         "<img src=\"http://188888888.xyz:5000/static/photo/123.jpg\"/>活动"
-                                         "内容内容内容　", num_of_view=12, author="lmp")
-act2 = Activity(title='活动我是活动2', content="活动内容内容内容"
-                                         "<img src=\"http://188888888.xyz:5000/static/photo/8.jpeg\"/>　活动内容内容内容　"
-                                         "<img src=\"http://188888888.xyz:5000/static/photo/123.jpg\"/>活动"
-                                         "内容内容内容　", num_of_view=12, author="cyj")
-act3 = Activity(title='活动我是活动3', content="活动内容内容内容"
-                                         "<img src=\"http://188888888.xyz:5000/static/photo/12.png\"/>　活动内容内容内容　"
-                                         "<img src=\"http://188888888.xyz:5000/static/photo/12.png\"/>活动"
-                                         "内容内容内容　", num_of_view=12, author='lzk')
-act4 = Activity(title='活动我是活动4', content="活动内容内容内容"
-                                         "<img src=\"http://188888888.xyz:5000/static/photo/123.jpg\"/>　活动内容内容内容　"
-                                         "<img src=\"http://188888888.xyz:5000/static/photo/12.png\"/>活动"
-                                         "内容内容内容　", num_of_view=12, author='abc')
-
-acl1 = Actcol(activity_id=1, user_id=1)
-acl2 = Actcol(activity_id=1, user_id=2)
-acl3 = Actcol(activity_id=1, user_id=3)
-acl4 = Actcol(activity_id=2, user_id=4)
-acl5 = Actcol(activity_id=2, user_id=5)
-acl6 = Actcol(activity_id=2, user_id=6)
-
-comment1 = Comment(content="我现在在测试就像个傻逼一样，不想评论你一次。。。", user_id=1,
-                   activity_id=1)
-comment2 = Comment(content="我现在在测试就像个傻逼一样，不想评论你两次。。。", user_id=1,
-                   activity_id=1)
-comment3 = Comment(content="我现在在测试就像个傻逼一样，不想评论你,我是用户２，这是活动１。。。", user_id=2,
-                   activity_id=1)
-comment4 = Comment(content="我现在在测试就像个傻逼一样，不想评论你，我是用户３。这是活动１。。", user_id=3,
-                   activity_id=1)
-comment5 = Comment(content="我现在在测试就像个傻逼一样，不想评论你，我是用户４。。这是活动１。", user_id=4,
-                   activity_id=1)
-comment6 = Comment(content="我现在在测试就像个傻逼一样，不想评论你,这是活动２，我是用户１。。。", user_id=1,
-                   activity_id=2)
-comment7 = Comment(content="我现在在测试就像个傻逼一样，不想评论你。。。", user_id=5,
-                   activity_id=2)
-comment8 = Comment(content="我现在在测试就像个傻逼一样，不想评论你。。。", user_id=6,
-                   activity_id=2)
-comment9 = Comment(content="我现在在测试就像个傻逼一样，不想评论你。。。", user_id=2,
-                   activity_id=2)
-
-reply1 = Reply(sender_id=6, recipient_id=1, content="我现在就不想回复你个傻逼，测试测个鸡儿，?", comment_id=1)
-reply2 = Reply(sender_id=2, recipient_id=1, content="我现在就不想回复你个傻逼，测试测个鸡儿，??", comment_id=1)
-reply3 = Reply(sender_id=3, recipient_id=1, content="我现在就不想回复你个傻逼，测试测个鸡儿，???", comment_id=1)
-reply4 = Reply(sender_id=4, recipient_id=1, content="我现在就不想回复你个傻逼，测试测个鸡儿，????", comment_id=1)
-reply5 = Reply(sender_id=5, recipient_id=1, content="我现在就不想回复你个傻逼，测试测个鸡儿，?????", comment_id=1)
-reply6 = Reply(sender_id=2, recipient_id=1, content="我现在就不想回复你个傻逼，测试测个鸡儿，??????", comment_id=1)
-reply11 = Reply(sender_id=6, recipient_id=1, content="我现在就不想回复你个傻逼，测试测个鸡儿，?", comment_id=2)
-reply22 = Reply(sender_id=2, recipient_id=1, content="我现在就不想回复你个傻逼，测试测个鸡儿，??", comment_id=3)
-reply33 = Reply(sender_id=3, recipient_id=1, content="我现在就不想回复你个傻逼，测试测个鸡儿，???", comment_id=2)
-reply44 = Reply(sender_id=4, recipient_id=1, content="我现在就不想回复你个傻逼，测试测个鸡儿，????", comment_id=5)
-reply55 = Reply(sender_id=5, recipient_id=1, content="我现在就不想回复你个傻逼，测试测个鸡儿，?????", comment_id=4)
-reply66 = Reply(sender_id=6, recipient_id=1, content="我现在就不想回复你个傻逼，测试测个鸡儿，??????", comment_id=1)
-
-db.session.add_all([act1, act2, act3, act4, acl1, acl2, acl3, acl4, acl5, acl6,
-                    comment1, comment2, comment3, comment4, comment5, comment6,
-                    comment7, comment8, comment9,
-                    reply1, reply2, reply3, reply4, reply5, reply6, reply11, reply22,
-                    reply33, reply44, reply55, reply66])
-db.session.commit()
-"""
+    # reply1 = Reply(comment_id=22, sender_id=1, content="我是1号，我在号发的第一条评论里面，回复了1", type=2)
+    # reply2 = Reply(comment_id=19, sender_id=2, content="我是2号，我号发的第一条评论里面，回复了2", type=2)
+    # reply3 = Reply(comment_id=22, sender_id=2, content="我是2号，我在号发的第一条评论里面，回复了3", type=2)
+    # reply4 = Reply(comment_id=22, sender_id=1, content="我是1号，我在号发的第一条评论里面，回复了4", type=2)
+    # reply5 = Reply(comment_id=22, sender_id=1, content="我是1号，....我在2号发的第一条评论里面，回复了5", type=2)
+    # reply6 = Reply(comment_id=22, sender_id=3, content="我是2号，我在号发的第一条评论里面，回复了6", type=2)
+    # db.session.add_all([reply6, reply5, reply4, reply3, reply2, reply1])
+    # db.session.commit()
