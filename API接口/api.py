@@ -3,6 +3,7 @@ from model import *
 import json
 from flask import request
 import os
+from sqlalchemy import and_
 
 basedir = os.path.abspath(os.path.dirname(__file__))
 
@@ -240,15 +241,16 @@ def CommentReply():
 def Community():
     if request.method == 'POST' and request.form.get('sort') == '0':
         # 默认是时间顺序排列，直接ｇｅｔ和ｐｏｓｔ上来的不是０的时候，就时间排序，
-        A = Blog.query.order_by(Blog.num_of_view.desc()).all()  # desc()是从大到小，没有desc就是从小到大
+        A = Blog.query.order_by(Blog.num_o.f_view.desc()).all()  # desc()是从大到小，没有desc就是从小到大
         payload = []
         content = {}
         for AA in A:
             name = User.query.get(AA.user_id).username
+            face = User.query.get(AA.user_id).face
             datetime = AA.create_time
             time = datetime.strftime('%Y-%m-%d %H:%M:%S')
-            content = {'id': AA.id, 'title': AA.title, 'author': AA.user_id, 'pageviews': AA.num_of_view,
-                       'time': time, "name": name}
+            content = {'id': AA.id, 'title': AA.title, 'authorid': AA.user_id, 'pageviews': AA.num_of_view,
+                       'time': time, "author": name, "avatar": face}
             payload.append(content)
             content = {}
         data = {"data": payload}
@@ -262,10 +264,11 @@ def Community():
         content = {}
         for AA in A:
             name = User.query.get(AA.user_id).username
+            face = User.query.get(AA.user_id).face
             datetime = AA.create_time
             time = datetime.strftime('%Y-%m-%d %H:%M:%S')
-            content = {'id': AA.id, 'title': AA.title, 'author': AA.user_id, 'pageviews': AA.num_of_view,
-                       'time': time, "name": name}
+            content = {'id': AA.id, 'title': AA.title, 'author': name, 'pageviews': AA.num_of_view,
+                       'time': time, "authorid": AA.user_id, "avatar": face}
             payload.append(content)
             content = {}
         data = {"data": payload}
@@ -306,7 +309,7 @@ def BlogDe():
         if b == None:
             follow = -1  # 则将收藏设置为-1
         else:
-            follow = 1  # 则将收藏设置为1
+            follow = 1  # 则将关注设置为1
 
     title = blog.title  # 博客表的标题
     content = blog.content  # 博客表的内容
@@ -318,7 +321,8 @@ def BlogDe():
     '''评论'''
     payload = []
     contentss = {}
-    cs = blog.replys
+    # cs = blog.replys
+    cs = Reply.query.order_by(Reply.addtime.desc()).paginate(1, per_page=10, error_out = False).items
     for c in cs:
         if c.type == 1:
             comid = c.id  # 评论表的id
@@ -328,6 +332,8 @@ def BlogDe():
             comcontent = c.content  # 评论的内容
             comtime = c.addtime.strftime('%Y-%m-%d %H:%M:%S')  # 评论的时间
             replyss = Reply.query.filter_by(comment_id=comid).all()
+            # replyss = Reply.query.filter_by(comment_id=comid).paginate(1, per_page=100, error_out = False).items
+
             num = 0
             for reply in replyss:
                 num = num + 1
@@ -336,47 +342,157 @@ def BlogDe():
             payload.append(contentss)
             contentss = {}
     data = {"title": title, "content": content, "time": time, "pageviews": pageviews, "author": author,
-            "collection": collection, "comments": payload}
+            "collection": collection, "follow": follow, "avatar ": face, "comments": payload}
 
     payload = json.dumps(data)
     return payload, 200
 
 
 # 搜索
-@app.route("/searchcp")
+@app.route("/searchcp", methods=["GET", "POST"])
 def HomeSearchcp():
-    pass
+    js = request.form.get('competition')
+    hd = request.form.get('activity')
+    if js == None and hd != None:
+        key_remark = hd
+        aa = Activity.query.filter(Activity.title.like("%" + key_remark + "%")).all()
+        payload = []
+        contentss = {}
+        for a in aa:
+            contentss = {"title": a.title, "id": a.id, "pageviews": a.num_of_view,
+                         "time": a.create_time.strftime('%Y-%m-%d %H:%M:%S')}
+            payload.append(contentss)
+            contentss = {}
+        data = {"data": payload}
+        payload = json.dumps(data)
+        return payload, 200
+
+    elif hd == None and js != None:
+        key_remark = js
+        aa = Competition.query.filter(Competition.title.like("%" + key_remark + "%")).all()
+        payload = []
+        contentss = {}
+        for a in aa:
+            contentss = {"title": a.title, "id": a.id, "pageviews": a.num_of_view,
+                         "time": a.create_time.strftime('%Y-%m-%d %H:%M:%S')}
+            payload.append(contentss)
+            contentss = {}
+        data = {"data": payload}
+        payload = json.dumps(data)
+        return payload, 200
+    else:
+        data = {'msg': "请选择竞赛或者活动"}
+        payload = json.dumps(data)
+        return payload, 400
 
 
 # 收藏竞赛接口
-@app.route("/compete/collection")
+@app.route("/compete/collection", methods=["GET", "POST"])
 def CpCollection():
-    pass
+    id = request.form.get('id')  # 竞赛的id
+    user_id = request.form.get('userid')  # 用户的id
 
+    com = Competition.query.get(id)
+    user = User.query.get(user_id)
+    if com == None or user == None:
+        data = {'msg': "error"}
+        payload = json.dumps(data)
+        return payload, 400
+    comcol = Cptcol(competition_id=id, user_id=user_id)
+    db.session.add(comcol)
+    db.session.commit()
 
-"""
+    data = {'msg': "success"}
+    payload = json.dumps(data)
+    return payload, 200
+
 
 # 获取个人资料
-@app.route("/user/data")
+@app.route("/user/data", methods=["GET", "POST"])
 def UserData():
-    pass
+    id = request.form.get('id')  # 用户的id
+    user = User.query.get(id)
+    if user == None:
+        data = {"msg": "error"}
+        payload = json.dumps(data)
+        return payload, 400
+
+    else:
+        username = user.username
+        nickname = user.nickname
+        sex = user.sex
+        email = user.email
+        phone = user.phone
+        school = user.school
+        level = user.level
+        face = user.face
+        data = {"username": username, "nickname": nickname, "sex": sex, "email": email, "phone": phone,
+                "school": school, "level": level, "avatar ": face}
+        data = {"user": data}
+        payload = json.dumps(data)
+        return payload, 200
 
 
 # 修改个人资料
-@app.route("/user/edit")
+@app.route("/user/edit", methods=["GET", "POST"])
 def UserEdit():
-    pass
+    id = request.form.get('id')
+    sex = request.form.get('sex')
+    username = request.form.get('username')
+    edituser = User.query.get(id)
+    if edituser == None:
+        return "error"
+    if sex == None and username == None:
+        return "请输入"
+    if sex == None:
+        edituser.username = username
+        db.session.add(edituser)
+        db.session.commit()
+    if username == None:
+        edituser.sex = sex
+        db.session.add(edituser)
+        db.session.commit()
+    else:
+        edituser.username = username
+        edituser.sex = sex
+        db.session.add(edituser)
+        db.session.commit()
+    return "success"
+
 
 # 评论博客
-@app.route("/blog/author/<int:id>")
-def index1211121(id):
-    pass
+@app.route("/blog/comment", methods=["GET", "POST"])
+def blogComment():
+    id = request.form.get('id')
+    userid = request.form.get('userid')
+    content = request.form.get("content")
+    blog = Blog.query.get(id)
+    user = User.query.get(userid)
+
+    if blog == None:
+        return "error"
+    if user == None:
+        return "error"
+
+    comment = Reply(sender_id=userid, content=content, type=1, blog_id=id)
+    db.session.add(comment)
+    db.session.commit()
+    return "success"
 
 
 # 关注
-@app.route("/follow")
-def index121222():
-    pass
+@app.route("/follow", methods=["GET", "POST"])
+def follow():
+    follpwer = request.form.get('follower')
+    followed = request.form.get('followed')
+    if follpwer == None:
+        return "error"
+    if followed == None:
+        return "error"
+    follow = Follow(follower_id=follpwer, followed_id=followed)
+    db.session.add(follow)
+    db.session.commit()
+    return "success"
 
 
 # 取消关注
@@ -385,18 +501,6 @@ def index123():
     pass
 
 
-# 收藏
-@app.route("/collect")
-def index321():
-    pass
-
-
-# 取消收藏
-@app.route('/uncollect')
-def index132():
-    pass
-
-"""
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0")
