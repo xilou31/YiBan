@@ -12,21 +12,6 @@ basedir = os.path.abspath(os.path.dirname(__file__))
 @app.route("/home/compete", methods=['POST', 'GET'])
 def HomeCpt():
     if request.method == 'POST' and request.form.get('sort') == '0':
-        # 默认是时间顺序排列，直接ｇｅｔ和ｐｏｓｔ上来的不是０的时候，就时间排序，
-        # 当ｐｏｓｔ上来的是０的时候就热度排序
-
-        # json 格式的用这个方法获取信息加载
-        # data = request.data
-        # j_data = json.loads(data)
-        # if j_data['sort'] == 1:
-        #     pass
-        # else:
-        #     pass
-
-        # form 表单格式的用这个来获取信息加载
-        # sort = request.form.get('sort')
-        # if sort == '0'
-
         c = Competition.query.order_by(Competition.num_of_view.desc()).all()  # desc()是从大到小，没有desc就是从小到大
         payload = []
         content = {}
@@ -206,6 +191,7 @@ def ActDetail():
 
 
 # 获取回复
+@app.route("/activity/reply", methods=["GET", "POST"])
 @app.route("/reply", methods=["GET", "POST"])
 def CommentReply():
     id = request.form.get('id')  # 获取要查看的id
@@ -228,7 +214,7 @@ def CommentReply():
             for getreply in getreplys:
                 num = num + 1
             contentss = {'id': replyid, 'author': name, 'avatar': face,
-                         'content': content, 'time': comtime, "number": num, "user_id": sender_id}
+                         'content': content, 'time': comtime, "number": num, "userid": sender_id}
             payload.append(contentss)
             contentss = {}
         data = {"comments": payload}
@@ -239,9 +225,10 @@ def CommentReply():
 # 社区首页接口
 @app.route("/community", methods=["GET", "POST"])
 def Community():
+    user = request.form.get('userid')
     if request.method == 'POST' and request.form.get('sort') == '0':
-        # 默认是时间顺序排列，直接ｇｅｔ和ｐｏｓｔ上来的不是０的时候，就时间排序，
-        A = Blog.query.order_by(Blog.num_o.f_view.desc()).all()  # desc()是从大到小，没有desc就是从小到大
+        # 默认是时间顺序排列，和ｐｏｓｔ上来的是０的时候，就热度排序，
+        A = Blog.query.order_by(Blog.num_of_view.desc()).all()  # desc()是从大到小，没有desc就是从小到大
         payload = []
         content = {}
         for AA in A:
@@ -257,31 +244,49 @@ def Community():
         payload = json.dumps(data)
         return payload, 200
 
-    else:
-        # 新发布的文章时间比较大，就先出现用ｄｅｓｃ从大到小排序
-        A = Blog.query.order_by(Blog.create_time.desc()).all()
+    if request.method == 'POST' and request.form.get('sort') == '2':
+        if user == None:
+            return "error"
+        # 默认是时间顺序排列，和ｐｏｓｔ上来的是2的时候，就只看关注的
+        A = User.query.get(user).followed  # 我关注的人
         payload = []
         content = {}
-        for AA in A:
-            name = User.query.get(AA.user_id).username
-            face = User.query.get(AA.user_id).face
-            datetime = AA.create_time
-            time = datetime.strftime('%Y-%m-%d %H:%M:%S')
-            content = {'id': AA.id, 'title': AA.title, 'author': name, 'pageviews': AA.num_of_view,
-                       'time': time, "authorid": AA.user_id, "avatar": face}
-            payload.append(content)
-            content = {}
+
+        for a in A:
+            bloguserid = a.followed_id  #我关注的人的id
+            userblogs = User.query.get(bloguserid).myblog
+            for blog in userblogs:
+                AA  = blog  # 找到对应的博客
+                name = User.query.get(AA.user_id).username
+                face = User.query.get(AA.user_id).face
+                datetime = AA.create_time
+                time = datetime.strftime('%Y-%m-%d %H:%M:%S')
+                content = {'id': AA.id, 'title': AA.title, 'authorid': AA.user_id, 'pageviews': AA.num_of_view,
+                           'time': time, "author": name, "avatar": face}
+                payload.append(content)
+                content = {}
         data = {"data": payload}
         payload = json.dumps(data)
         return payload, 200
 
 
-"""
-用户的ｉｄ和博客的ｉｄ
-用户的ｉｄ来查看是否与博客的作者关注
-用户的ｉｄ来查看是否与博客收藏
-博客的ｉｄ用来返回　文章内容　标题　作者头像　作者用户名　浏览次数　发布时间　评论的内容　　
-"""
+    # 新发布的文章时间比较大，就先出现用ｄｅｓｃ从大到小排序
+    A = Blog.query.order_by(Blog.create_time.desc()).all()
+    payload = []
+    content = {}
+    for AA in A:
+        name = User.query.get(AA.user_id).username
+        face = User.query.get(AA.user_id).face
+        datetime = AA.create_time
+        time = datetime.strftime('%Y-%m-%d %H:%M:%S')
+        content = {'id': AA.id, 'title': AA.title, 'author': name, 'pageviews': AA.num_of_view,
+                   'time': time, "authorid": AA.user_id, "avatar": face}
+        payload.append(content)
+        content = {}
+    data = {"data": payload}
+    payload = json.dumps(data)
+    return payload, 200
+
 
 
 # 获取博客的详情
@@ -310,7 +315,8 @@ def BlogDe():
             follow = -1  # 则将收藏设置为-1
         else:
             follow = 1  # 则将关注设置为1
-
+    id = blog.id
+    authorid = blog.user_id
     title = blog.title  # 博客表的标题
     content = blog.content  # 博客表的内容
     time = blog.create_time.strftime('%Y-%m-%d %H:%M:%S')  # 博客表的发布时间
@@ -321,8 +327,8 @@ def BlogDe():
     '''评论'''
     payload = []
     contentss = {}
-    # cs = blog.replys
-    cs = Reply.query.order_by(Reply.addtime.desc()).paginate(1, per_page=10, error_out = False).items
+    cs = blog.replys
+    # cs = Reply.query.order_by(Reply.addtime.desc()).paginate(1, per_page=10, error_out=False).items
     for c in cs:
         if c.type == 1:
             comid = c.id  # 评论表的id
@@ -341,7 +347,7 @@ def BlogDe():
                          'content': comcontent, 'time': comtime, "number": num, "user_id": comauthorid}
             payload.append(contentss)
             contentss = {}
-    data = {"title": title, "content": content, "time": time, "pageviews": pageviews, "author": author,
+    data = {"id":id, "title": title, "authorid":authorid, "content": content, "time": time, "pageviews": pageviews, "author": author,
             "collection": collection, "follow": follow, "avatar ": face, "comments": payload}
 
     payload = json.dumps(data)
@@ -353,6 +359,11 @@ def BlogDe():
 def HomeSearchcp():
     js = request.form.get('competition')
     hd = request.form.get('activity')
+    userid = request.form.get('userid')
+    if userid == None or User.query.get(userid) == None:
+        data = {'msg': "请输入正确的用户id"}
+        payload = json.dumps(data)
+        return payload, 400
     if js == None and hd != None:
         key_remark = hd
         aa = Activity.query.filter(Activity.title.like("%" + key_remark + "%")).all()
@@ -407,6 +418,69 @@ def CpCollection():
     return payload, 200
 
 
+# 取消收藏竞赛接口
+@app.route("/compete/deletecollection", methods=["GET", "POST"])
+def decompCollection():
+    id = request.form.get('id')  # 竞赛的id
+    user_id = request.form.get('userid')  # 用户的id
+
+    com = Competition.query.get(id)
+    user = User.query.get(user_id)
+    if com == None or user == None:
+        data = {'msg': "error"}
+        payload = json.dumps(data)
+        return payload, 400
+    comcol = Cptcol.query.filter_by(competition_id=id, user_id=user_id).first()
+    db.session.delete(comcol)
+    db.session.commit()
+
+    data = {'msg': "success"}
+    payload = json.dumps(data)
+    return payload, 200
+
+
+# 收藏活动接口
+@app.route("/activity/collection", methods=["GET", "POST"])
+def ActCollection():
+    id = request.form.get('id')  # 活动的id
+    user_id = request.form.get('userid')  # 用户的id
+
+    com = Activity.query.get(id)
+    user = User.query.get(user_id)
+    if com == None or user == None:
+        data = {'msg': "error"}
+        payload = json.dumps(data)
+        return payload, 400
+    actcol = Actcol(activity_id=id, user_id=user_id)
+    db.session.add(actcol)
+    db.session.commit()
+
+    data = {'msg': "success"}
+    payload = json.dumps(data)
+    return payload, 200
+
+
+# 取消收藏活动接口
+@app.route("/activity/deletecollection", methods=["GET", "POST"])
+def deactCollection():
+    id = request.form.get('id')  # 竞赛的id
+    user_id = request.form.get('userid')  # 用户的id
+
+    com = Activity.query.get(id)
+    user = User.query.get(user_id)
+    if com == None or user == None:
+        data = {'msg': "error"}
+        payload = json.dumps(data)
+        return payload, 400
+    Actcols = Actcol.query.filter_by(activity_id=id, user_id=user_id).first()
+    db.session.delete(Actcols)
+    db.session.commit()
+
+    data = {'msg': "success"}
+    payload = json.dumps(data)
+    return payload, 200
+
+
 # 获取个人资料
 @app.route("/user/data", methods=["GET", "POST"])
 def UserData():
@@ -421,13 +495,10 @@ def UserData():
         username = user.username
         nickname = user.nickname
         sex = user.sex
-        email = user.email
-        phone = user.phone
         school = user.school
-        level = user.level
         face = user.face
-        data = {"username": username, "nickname": nickname, "sex": sex, "email": email, "phone": phone,
-                "school": school, "level": level, "avatar ": face}
+        data = {"username": username, "nickname": nickname, "sex": sex,
+                "school": school,  "avatar ": face}
         data = {"user": data}
         payload = json.dumps(data)
         return payload, 200
@@ -441,7 +512,9 @@ def UserEdit():
     username = request.form.get('username')
     edituser = User.query.get(id)
     if edituser == None:
-        return "error"
+        data = {'msg': "error"}
+        payload = json.dumps(data)
+        return payload, 400
     if sex == None and username == None:
         return "请输入"
     if sex == None:
@@ -457,27 +530,67 @@ def UserEdit():
         edituser.sex = sex
         db.session.add(edituser)
         db.session.commit()
-    return "success"
+
+    data = {'msg': "success"}
+    payload = json.dumps(data)
+    return payload, 200
 
 
-# 评论博客
-@app.route("/blog/comment", methods=["GET", "POST"])
+# 评论及回复
+@app.route("/comment", methods=["GET", "POST"])
 def blogComment():
-    id = request.form.get('id')
+    blogid = request.form.get('blogid')
+    actid = request.form.get('activityid')
+    commentid = request.form.get('commentid')
     userid = request.form.get('userid')
     content = request.form.get("content")
-    blog = Blog.query.get(id)
-    user = User.query.get(userid)
 
-    if blog == None:
-        return "error"
+    if blogid != None:
+        blog = Blog.query.get(blogid)
+    else:
+        blog = None
+    if userid != None:
+        user = User.query.get(userid)
+    else:
+        user = None
+    if actid != None:
+        act = Activity.query.get(actid)
+    else:
+        act = None
+    if commentid != None:
+        comm = Reply.query.get(commentid)
+    else:
+        comm = None
+
+
     if user == None:
-        return "error"
+        data = {'msg': "error"}
+        payload = json.dumps(data)
+        return payload, 400
+    if comm == None and blog == None:  # 如果是活动评论
+        comment = Reply(sender_id=userid, content=content, type=1, activity_id=actid)
+        db.session.add(comment)
+        db.session.commit()
 
-    comment = Reply(sender_id=userid, content=content, type=1, blog_id=id)
-    db.session.add(comment)
-    db.session.commit()
-    return "success"
+        data = {'msg': "success"}
+        payload = json.dumps(data)
+        return payload, 200
+    elif comm == None and act == None:  # 如果是博客评论
+        comment = Reply(sender_id=userid, content=content, type=1, blog_id=blogid)
+        db.session.add(comment)
+        db.session.commit()
+
+        data = {'msg': "success"}
+        payload = json.dumps(data)
+        return payload, 200
+    else:  # 回复评论
+        comment = Reply(sender_id=userid, content=content, type=2, comment_id=commentid)
+        db.session.add(comment)
+        db.session.commit()
+
+        data = {'msg': "success"}
+        payload = json.dumps(data)
+        return payload, 200
 
 
 # 关注
@@ -485,21 +598,78 @@ def blogComment():
 def follow():
     follpwer = request.form.get('follower')
     followed = request.form.get('followed')
-    if follpwer == None:
-        return "error"
-    if followed == None:
-        return "error"
+    if follpwer == None or followed == None:
+        data = {'msg': "error"}
+        payload = json.dumps(data)
+        return payload, 200
+
     follow = Follow(follower_id=follpwer, followed_id=followed)
     db.session.add(follow)
     db.session.commit()
-    return "success"
+
+    data = {'msg': "success"}
+    payload = json.dumps(data)
+    return payload, 200
 
 
 # 取消关注
-@app.route("/unfollow")
-def index123():
-    pass
+@app.route("/unfollow", methods=["GET", "POST"])
+def unfollow():
+    follower = request.form.get('follower')
+    followed = request.form.get('followed')
+    if follower == None:
+        return "error"
+    if followed == None:
+        return "error"
+    follow = Follow.query.filter_by(follower_id=follower, followed_id=followed).first()
+    db.session.delete(follow)
+    db.session.commit()
 
+    data = {'msg': "success"}
+    payload = json.dumps(data)
+    return payload, 200
+
+
+# 收藏博客接口
+@app.route("/blog/collection", methods=["GET", "POST"])
+def blogCollection():
+    id = request.form.get('id')  # 博客的id
+    user_id = request.form.get('userid')  # 用户的id
+
+    com = Blog.query.get(id)
+    user = User.query.get(user_id)
+    if com == None or user == None:
+        data = {'msg': "error"}
+        payload = json.dumps(data)
+        return payload, 400
+    blogcol = Blogcol(blog_id=id, user_id=user_id)
+    db.session.add(blogcol)
+    db.session.commit()
+
+    data = {'msg': "success"}
+    payload = json.dumps(data)
+    return payload, 200
+
+
+# 取消收藏博客接口
+@app.route("/blog/deletecollection", methods=["GET", "POST"])
+def deblogCollection():
+    id = request.form.get('id')  # 博客的id
+    user_id = request.form.get('userid')  # 用户的id
+
+    com = Blog.query.get(id)
+    user = User.query.get(user_id)
+    if com == None or user == None:
+        data = {'msg': "error"}
+        payload = json.dumps(data)
+        return payload, 400
+    blogcol = Blogcol.query.filter_by(blog_id=id, user_id=user_id).first()
+    db.session.delete(blogcol)
+    db.session.commit()
+
+    data = {'msg': "success"}
+    payload = json.dumps(data)
+    return payload, 200
 
 
 if __name__ == "__main__":

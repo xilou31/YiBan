@@ -7,14 +7,13 @@ from flask_sqlalchemy import SQLAlchemy
 import pymysql
 
 app = Flask(__name__)
-app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql+pymysql://root:123456@47.107.98.254:3306/yibantest'
+app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql+pymysql://root:123456@47.107.98.254:3306/yiban'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.config['SECRET_KEY'] = 'xxx'
 db = SQLAlchemy(app)
 
 # 本地测试用的代码
 """
-
 from flask import Flask
 from flask_sqlalchemy import SQLAlchemy
 import os
@@ -33,15 +32,13 @@ db = SQLAlchemy(app)
 class User(db.Model):
     __tablename__ = "user"
     id = db.Column(db.Integer, primary_key=True)  # 编号
-    username = db.Column(db.String(100), unique=True)  # 用户名　（唯一的）
-    nickname = db.Column(db.String(100))  # 昵称
+    username = db.Column(db.String(100))  # 用户名　
+    nickname = db.Column(db.String(100), unique=True)  # 昵称（唯一的）
     pwd = db.Column(db.String(100))  # 密码
-    sex = db.Column(db.Integer)  # 性别
-    email = db.Column(db.String(100), unique=True)  # 邮箱
-    phone = db.Column(db.String(11), unique=True)  # 手机号码
+    sex = db.Column(db.Integer, default=0)  # 性别
     school = db.Column(db.String(100))  # 学校
-    level = db.Column(db.String(100))  # 年级
     face = db.Column(db.String(255))  # 头像
+    shhistory = db.Column(db.String(255))  # 搜索历史
     addtime = db.Column(db.DateTime, index=True, default=datetime.now)  # 注册时间
 
     team = db.relationship('Team', backref='user')  # 组队外键关系关联.
@@ -103,8 +100,10 @@ class Competition(db.Model):
     create_time = db.Column(db.DateTime, index=True, default=datetime.now)  # 添加时间
     cptcol = db.relationship('Cptcol', backref='competition')  # 竞赛收藏外键关系关联
     team = db.relationship('Team', backref='competition')  # 组队外键关系关联
+
     def __repr__(self):
         return "<Competition %r>" % self.title
+
 
 # 活动
 class Activity(db.Model):
@@ -117,9 +116,9 @@ class Activity(db.Model):
     create_time = db.Column(db.DateTime, index=True, default=datetime.now)  # 添加时间
     replys = db.relationship('Reply', backref='activity')  # 评论外键关系关联
     actcol = db.relationship('Actcol', backref='activity')  # 博客收藏外键关系关联
+
     def __repr__(self):
         return "<Activity %r>" % self.title
-
 
 
 # 组队
@@ -132,9 +131,9 @@ class Team(db.Model):
     info = db.Column(db.Text)  # 队伍简介内容
     competition_id = db.Column(db.Integer, db.ForeignKey('competition.id'))  # 所属竞赛
     create_time = db.Column(db.DateTime, index=True, default=datetime.now)  # 添加时间
+
     def __repr__(self):
         return "<Team %r>" % self.teamname
-
 
 
 # 回复及评论
@@ -149,6 +148,7 @@ class Reply(db.Model):
     blog_id = db.Column(db.Integer, db.ForeignKey('blog.id'))  # 所属博客
     activity_id = db.Column(db.Integer, db.ForeignKey('activity.id'))  # 所属活动
     addtime = db.Column(db.DateTime, index=True, default=datetime.now)  # 添加时间
+
     def __repr__(self):
         return "<Reply %r>" % self.id
 
@@ -184,6 +184,7 @@ class Cptcol(db.Model):
     competition_id = db.Column(db.Integer, db.ForeignKey('competition.id'))  # 所属竞赛
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'))  # 所属用户
     add_time = db.Column(db.DateTime, index=True, default=datetime.now)  # 添加时间
+
     def __repr__(self):
         return "<Cptcol %r>" % self.id
 
@@ -221,6 +222,5 @@ class Follow(db.Model):
 
 
 if __name__ == "__main__":
-    # pass
-    db.drop_all()
+    # db.drop_all()
     db.create_all()
