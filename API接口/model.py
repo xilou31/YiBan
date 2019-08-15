@@ -32,8 +32,8 @@ db = SQLAlchemy(app)
 class User(db.Model):
     __tablename__ = "user"
     id = db.Column(db.Integer, primary_key=True)  # 编号
-    username = db.Column(db.String(100))  # 用户名　
-    nickname = db.Column(db.String(100), unique=True)  # 昵称（唯一的）
+    username = db.Column(db.String(100), unique=True)  # 用户名　（唯一的）
+    nickname = db.Column(db.String(100))  # 昵称（唯一的）
     pwd = db.Column(db.String(100))  # 密码
     sex = db.Column(db.Integer, default=0)  # 性别
     school = db.Column(db.String(100))  # 学校
