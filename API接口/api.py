@@ -13,6 +13,7 @@ basedir = os.path.abspath(os.path.dirname(__file__))
 .竞赛内容详情/compete/detail
 .收藏竞赛接口/compete/collection
 .取消收藏竞赛接口/compete/deletecollection
+.发布组队信息接口/compete/team
 
 .搜索功能/search
 
@@ -160,6 +161,39 @@ def decompCollection():
     data = {'msg': "success"}
     payload = json.dumps(data)
     return payload, 200
+
+# 发布组队信息
+@app.route("/compete/team", methods=["GET", "POST"])
+def competeteam():
+    competeid = request.form.get('id')  # 竞赛的id
+    userid = request.form.get('userid')  # 用户的id,没登录就传-1
+    teamname = request.form.get('name')  # 队伍的名字
+    neednum = request.form.get('number')  # 队伍需要的人数
+    info = request.form.get('lam')  # 队伍的简介
+    '''如果用户没登录或者没这个用户，不能发表组队信息'''
+    user = User.query.get(userid)
+    if user == None or userid == '-1':
+        data = {"msg": "error"}
+        payload = json.dumps(data)
+        return payload, 400
+    '''如果竞赛id错误，就返回错误'''
+    com = Competition.query.get(competeid)
+    if com == None:
+        data = {"msg": "error"}
+        payload = json.dumps(data)
+        return payload, 400
+    try:
+        team = Team(master_id=userid, teamname=teamname, need=neednum, info=info,competition_id=competeid)
+        db.session.add(team)
+        db.session.commit()
+
+        data = {"msg": "success"}
+        payload = json.dumps(data)
+        return payload, 200
+    except:
+        data = {"msg":"error"}
+        payload = json.dumps(data)
+        return payload, 400
 
 
 # 搜索
@@ -615,7 +649,7 @@ def UserData():
         school = user.school
         face = user.face
         data = {"username": username, "nickname": nickname, "sex": sex,
-                "school": school, "avatar ": face}
+                "school": school, "avatar": face}
         data = {"user": data}
         payload = json.dumps(data)
         return payload, 200
