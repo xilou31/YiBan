@@ -41,7 +41,6 @@ class User(db.Model):
     shhistory = db.Column(db.String(255))  # 搜索历史
     addtime = db.Column(db.DateTime, index=True, default=datetime.now)  # 注册时间
 
-    team = db.relationship('Team', backref='user')  # 组队外键关系关联.
     blogcol = db.relationship('Blogcol', backref='user')  # 博客收藏外键关系关联
     search = db.relationship('Search', backref='user')  # 搜索历史外键关系关联
     cptcol = db.relationship('Cptcol', backref='user')  # 竞赛收藏外键关系关联
@@ -61,12 +60,12 @@ class User(db.Model):
                                foreign_keys='Follow.follower_id',
                                backref=db.backref('follower', lazy='joined'),
                                lazy='dynamic',
-                               cascade='all, delete-orphan')  # 关注我的
+                               cascade='all, delete-orphan')  # 我关注的
     followers = db.relationship('Follow',
                                 foreign_keys='Follow.followed_id',
                                 backref=db.backref('followed', lazy='joined'),
                                 lazy='dynamic',
-                                cascade='all, delete-orphan')  # 我关注的
+                                cascade='all, delete-orphan')  # 关注我的
 
     def __repr__(self):
         return "<User %r>" % self.nickname
@@ -95,11 +94,12 @@ class Competition(db.Model):
     id = db.Column(db.Integer, primary_key=True)  # 编号
     title = db.Column(db.Text)  # 标题
     content = db.Column(db.Text)  # 内容
-    author = db.Column(db.String(100))  # 作者
+    url = db.Column(db.String(255))  # 封面图url
+    author = db.Column(db.String(255))  # 网站url
     num_of_view = db.Column(db.Integer, default=0)  # 浏览次数
     create_time = db.Column(db.DateTime, index=True, default=datetime.now)  # 添加时间
     cptcol = db.relationship('Cptcol', backref='competition')  # 竞赛收藏外键关系关联
-    team = db.relationship('Team', backref='competition')  # 组队外键关系关联
+    replys = db.relationship('Reply', backref='competition')  # 评论外键关系关联
 
     def __repr__(self):
         return "<Competition %r>" % self.title
@@ -111,7 +111,8 @@ class Activity(db.Model):
     id = db.Column(db.Integer, primary_key=True)  # 编号
     title = db.Column(db.Text)  # 标题
     content = db.Column(db.Text)  # 内容
-    author = db.Column(db.String(100))  # 作者
+    url = db.Column(db.String(255))  # 封面图url
+    author = db.Column(db.String(255))  # 网站url
     num_of_view = db.Column(db.Integer, default=0)  # 浏览次数
     create_time = db.Column(db.DateTime, index=True, default=datetime.now)  # 添加时间
     replys = db.relationship('Reply', backref='activity')  # 评论外键关系关联
@@ -119,21 +120,6 @@ class Activity(db.Model):
 
     def __repr__(self):
         return "<Activity %r>" % self.title
-
-
-# 组队
-class Team(db.Model):
-    __tablename__ = "team"
-    id = db.Column(db.Integer, primary_key=True)  # 编号
-    master_id = db.Column(db.Integer, db.ForeignKey('user.id'))  # 所属队长
-    teamname = db.Column(db.String(100))  # 队伍名字
-    need = db.Column(db.Integer)  # 需要的队伍人数
-    info = db.Column(db.Text)  # 队伍简介内容
-    competition_id = db.Column(db.Integer, db.ForeignKey('competition.id'))  # 所属竞赛
-    create_time = db.Column(db.DateTime, index=True, default=datetime.now)  # 添加时间
-
-    def __repr__(self):
-        return "<Team %r>" % self.teamname
 
 
 # 回复及评论
@@ -147,6 +133,7 @@ class Reply(db.Model):
     type = db.Column(db.Integer)  # 类型，1是评论，2是回复
     blog_id = db.Column(db.Integer, db.ForeignKey('blog.id'))  # 所属博客
     activity_id = db.Column(db.Integer, db.ForeignKey('activity.id'))  # 所属活动
+    competition_id = db.Column(db.Integer, db.ForeignKey('competition.id'))  # 所属竞赛
     addtime = db.Column(db.DateTime, index=True, default=datetime.now)  # 添加时间
 
     def __repr__(self):
