@@ -1,10 +1,11 @@
 # coding: utf-8
 from model import *
 import json
-from flask import request
 import os
-from sqlalchemy import and_
 from datetime import datetime
+import random
+from flask import request
+import requests
 
 basedir = os.path.abspath(os.path.dirname(__file__))
 
@@ -763,13 +764,22 @@ def UserEdit():
         data = {'msg': "error"}
         payload = json.dumps(data)
         return payload, 400
-    if sex == None and nickname == None:
-        return "请输入"
+    if sex == None and nickname == None and img == None:
+        data = {'msg': "你提交的内容为空"}
+        payload = json.dumps(data)
+        return payload, 400
 
     if img != None:
         try:
+
             path = basedir + "/static/photo/"
-            img.filename = datetime.now().strftime("%Y%m%d%H%M%S") + img.filename
+            try:
+                gethz = img.filename.rsplit('.', 1)[1]  # 获取后缀
+                randomNum = random.randint(0, 100)
+                img.filename = datetime.now().strftime("%Y%m%d%H%M%S") + "_" + str(randomNum) + "." + gethz
+
+            except:
+                img.filename = datetime.now().strftime("%Y%m%d%H%M%S") + img.filename
             file_path = path + img.filename
             img.save(file_path)
             pathfile = "/static/photo/" + img.filename
@@ -800,11 +810,6 @@ def UserEdit():
             data = {'msg': "error"}
             payload = json.dumps(data)
             return payload, 400
-    # else:
-    #     edituser.nickname = nickname
-    #     edituser.sex = sex
-    #     db.session.add(edituser)
-    #     db.session.commit()
 
     data = {'msg': "success"}
     payload = json.dumps(data)
@@ -1016,11 +1021,41 @@ def colblog():
 def uploadpic():
     img = request.files.get('pic')
     path = basedir + "/static/photo/"
-    img.filename = datetime.now().strftime("%Y%m%d%H%M%S") + img.filename
+    try:
+        gethz = img.filename.rsplit('.', 1)[1]
+        randomNum = random.randint(0, 100)
+        img.filename = datetime.now().strftime("%Y%m%d%H%M%S") + "_" + str(randomNum) + "." + gethz
+    except:
+        img.filename = datetime.now().strftime("%Y%m%d%H%M%S") + img.filename
     file_path = path + img.filename
     img.save(file_path)
     pathfile = "/static/photo/" + img.filename
     return pathfile
+
+
+app_id = "c751a57fd14a86f4"
+app_secret = "923460388580b30507e5deaacd08f39e"
+back_url = "http://188888888.xyz:5000/backurl"
+
+
+@app.route("/backurl")
+def login_yiban():
+    # 获取code
+    code = str(request.args.get("code"))
+    # 获取token
+    url = "https://oauth.yiban.cn/token/info?code=%(CODE)s&client_id=%(APPID)s&" \
+          "client_secret=%(APPSECRET)s&redirect_uri=%(CALLBACK)s" % {"CODE": code, "APPID": app_id,
+                                                                     "APPSECRET": app_secret, "CALLBACK": back_url}
+    response = requests.request("GET", url)
+    access_token = response.json()["access_token"]  # token
+
+    payload = {"access_token": access_token}
+    url = "https://openapi.yiban.cn/user/me"
+    response = requests.request("GET", url, params=payload)
+    username = response.json()["info"]["yb_username"]
+    msg = {"username": username}
+    data = json.dumps(msg)
+    return data, 200
 
 
 if __name__ == "__main__":

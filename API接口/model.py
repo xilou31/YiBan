@@ -52,10 +52,10 @@ class User(db.Model):
                                  backref='author', lazy='dynamic')  # 我发的
     reply_received = db.relationship('Reply', foreign_keys='Reply.recipient_id',
                                      backref='recipient', lazy='dynamic')  # 我收的
-    messages_sent = db.relationship('Message', foreign_keys='Message.sender_id',
-                                    backref='author', lazy='dynamic')  # 我发的
-    messages_received = db.relationship('Message', foreign_keys='Message.recipient_id',
-                                        backref='recipient', lazy='dynamic')  # 我收的
+    # messages_sent = db.relationship('Message', foreign_keys='Message.sender_id',
+    #                                 backref='author', lazy='dynamic')  # 我发的
+    # messages_received = db.relationship('Message', foreign_keys='Message.recipient_id',
+    #                                     backref='recipient', lazy='dynamic')  # 我收的
     followed = db.relationship('Follow',
                                foreign_keys='Follow.follower_id',
                                backref=db.backref('follower', lazy='joined'),
@@ -93,6 +93,7 @@ class Competition(db.Model):
     __tablename__ = "competition"
     id = db.Column(db.Integer, primary_key=True)  # 编号
     title = db.Column(db.Text)  # 标题
+    type = db.Column(db.String(10))  # 类型
     content = db.Column(db.Text)  # 内容
     url = db.Column(db.String(255))  # 封面图url
     author = db.Column(db.String(255))  # 网站url
@@ -110,6 +111,7 @@ class Activity(db.Model):
     __tablename__ = "activity"
     id = db.Column(db.Integer, primary_key=True)  # 编号
     title = db.Column(db.Text)  # 标题
+    type = db.Column(db.String(10))  # 类型
     content = db.Column(db.Text)  # 内容
     url = db.Column(db.String(255))  # 封面图url
     author = db.Column(db.String(255))  # 网站url
@@ -185,17 +187,17 @@ class Search(db.Model):
     cp_or_act = db.Column(db.Integer)  # 数字１代表活动，数字２代表竞赛
 
 
-# 聊天
-class Message(db.Model):
-    __tablename__ = 'messages'
-    id = db.Column(db.Integer, primary_key=True)
-    sender_id = db.Column(db.Integer, db.ForeignKey('user.id'))
-    recipient_id = db.Column(db.Integer, db.ForeignKey('user.id'))
-    body = db.Column(db.TEXT)
-    add_time = db.Column(db.DateTime, index=True, default=datetime.now)  # 添加时间
-
-    def __repr__(self):
-        return '<Message {}>'.format(self.body)
+# # 聊天
+# class Message(db.Model):
+#     __tablename__ = 'messages'
+#     id = db.Column(db.Integer, primary_key=True)
+#     sender_id = db.Column(db.Integer, db.ForeignKey('user.id'))
+#     recipient_id = db.Column(db.Integer, db.ForeignKey('user.id'))
+#     body = db.Column(db.TEXT)
+#     add_time = db.Column(db.DateTime, index=True, default=datetime.now)  # 添加时间
+#
+#     def __repr__(self):
+#         return '<Message {}>'.format(self.body)
 
 
 # 关注
@@ -209,5 +211,4 @@ class Follow(db.Model):
 
 
 if __name__ == "__main__":
-    # db.drop_all()
     db.create_all()
