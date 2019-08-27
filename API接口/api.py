@@ -48,16 +48,6 @@ basedir = os.path.abspath(os.path.dirname(__file__))
 """
 
 
-# 组队改为评论ok
-# 查看关注竞赛活动博客ok
-# 查看我的博客ok
-# 修改头像ok
-# 查看我关注的人ok
-# 创建博客ok
-# 竞赛和活动改加url（并且作者是文章的url）ok
-# 浏览次数ok
-
-
 # 获取竞赛推文
 @app.route("/home/compete", methods=['POST', 'GET'])
 def HomeCpt():
@@ -69,7 +59,7 @@ def HomeCpt():
             datetime = cc.create_time
             time = datetime.strftime('%Y-%m-%d %H:%M:%S')
             content = {'id': cc.id, 'title': cc.title, 'author': cc.author, 'pageviews': cc.num_of_view,
-                       'time': time}
+                       'time': time, 'url': cc.url}
             payload.append(content)
             content = {}
         data = {"data": payload}
@@ -84,7 +74,7 @@ def HomeCpt():
             datetime = cc.create_time
             time = datetime.strftime('%Y-%m-%d %H:%M:%S')
             content = {'id': cc.id, 'title': cc.title, 'author': cc.author, 'pageviews': cc.num_of_view,
-                       'time': time}
+                       'time': time, 'url': cc.url}
             payload.append(content)
             content = {}
         data = {"data": payload}
@@ -115,6 +105,7 @@ def CptDetail():
     title = com.title  # 竞赛表的标题
     content = com.content  # 竞赛表的内容
     time = com.create_time.strftime('%Y-%m-%d %H:%M:%S')  # 竞赛表的发布时间
+    types = com.type
     pageviews = com.num_of_view  # 竞赛的浏览次数
     author = com.author  # 竞赛的发布者
     pageviews = pageviews + 1  # 浏览量加1
@@ -143,7 +134,7 @@ def CptDetail():
             payload.append(contentss)
             contentss = {}
     data = {"title": title, "content": content, "time": time, "pageviews": pageviews, "author": author,
-            "collection": collection, "comments": payload}
+            "collection": collection, "type": types, "comments": payload}
 
     payload = json.dumps(data)
     return payload, 200
@@ -211,9 +202,12 @@ def HomeSearchcp():
         data = {'msg': "请输入正确的用户id"}
         payload = json.dumps(data)
         return payload, 400
-    if js == None and hd != None:
+    if js == None and hd != None:  # 活动
         key_remark = hd
         aa = Activity.query.filter(Activity.title.like("%" + key_remark + "%")).all()
+        s = Search(keyword=key_remark, user_id=userid, cp_or_act=1)
+        db.session.add(s)
+        db.session.commit()
         payload = []
         contentss = {}
         for a in aa:
@@ -225,9 +219,12 @@ def HomeSearchcp():
         payload = json.dumps(data)
         return payload, 200
 
-    elif hd == None and js != None:
+    elif hd == None and js != None:  # 竞赛
         key_remark = js
         aa = Competition.query.filter(Competition.title.like("%" + key_remark + "%")).all()
+        s = Search(keyword=key_remark, user_id=userid, cp_or_act=2)
+        db.session.add(s)
+        db.session.commit()
         payload = []
         contentss = {}
         for a in aa:
@@ -244,6 +241,51 @@ def HomeSearchcp():
         return payload, 400
 
 
+# 搜索历史
+@app.route("/search/history", methods=["GET", "POST"])
+def searchhistory():
+    userid = request.form.get('userid')  # 用户的id
+    user = User.query.get(userid)
+    # type = request.form.get('type') #  数字１代表活动，数字２代表竞赛
+    if userid == None or user == None:
+        data = {'msg': "请输入正确的用户id"}
+        payload = json.dumps(data)
+        return payload, 400
+    payload = []
+    contentss = {}
+    shs = Search.query.filter_by(user_id=userid)
+    for sh in shs:
+        contentss = {"keyword": sh.keyword, 'id': sh.id}
+        payload.append(contentss)
+        contentss = {}
+    data = {"data": payload}
+    payload = json.dumps(data)
+    return payload, 200
+
+
+# 删除搜索历史
+@app.route("/search/delete", methods=["GET", "POST"])
+def delsearch():
+    userid = request.form.get('userid')
+    searchid = request.form.get('searchid')
+    user = User.query.get(userid)
+    if userid == None or user == None:
+        data = {'msg': "请输入正确的用户id"}
+        payload = json.dumps(data)
+        return payload, 400
+    try:
+        s = Search.query.filter_by(id=searchid, user_id=userid).first()
+        db.session.delete(s)
+        db.session.commit()
+        data = {'msg': "success"}
+        payload = json.dumps(data)
+        return payload, 200
+    except:
+        data = {'msg': "error"}
+        payload = json.dumps(data)
+        return payload, 400
+
+
 # 获取活动推文
 @app.route("/home/activity", methods=['POST', 'GET'])
 def HomeAct():
@@ -256,7 +298,7 @@ def HomeAct():
             datetime = AA.create_time
             time = datetime.strftime('%Y-%m-%d %H:%M:%S')
             content = {'id': AA.id, 'title': AA.title, 'author': AA.author, 'pageviews': AA.num_of_view,
-                       'time': time}
+                       'time': time, 'url': AA.url}
             payload.append(content)
             content = {}
         data = {"data": payload}
@@ -272,7 +314,7 @@ def HomeAct():
             datetime = AA.create_time
             time = datetime.strftime('%Y-%m-%d %H:%M:%S')
             content = {'id': AA.id, 'title': AA.title, 'author': AA.author, 'pageviews': AA.num_of_view,
-                       'time': time}
+                       'time': time, 'url': AA.url}
             payload.append(content)
             content = {}
         data = {"data": payload}
@@ -303,6 +345,7 @@ def ActDetail():
     title = act.title  # 活动表的标题
     content = act.content  # 活动表的内容
     time = act.create_time.strftime('%Y-%m-%d %H:%M:%S')  # 活动表的发布时间
+    types = act.type
     pageviews = act.num_of_view  # 活动的浏览次数
     author = act.author  # 活动的发布者
     pageviews = pageviews + 1
@@ -331,7 +374,7 @@ def ActDetail():
             payload.append(contentss)
             contentss = {}
     data = {"title": title, "content": content, "time": time, "pageviews": pageviews, "author": author,
-            "collection": collection, "comments": payload}
+            "collection": collection, "comments": payload, 'type': types}
 
     payload = json.dumps(data)
     return payload, 200
@@ -1021,16 +1064,15 @@ def colblog():
 def uploadpic():
     img = request.files.get('pic')
     path = basedir + "/static/photo/"
-    try:
-        gethz = img.filename.rsplit('.', 1)[1]
-        randomNum = random.randint(0, 100)
-        img.filename = datetime.now().strftime("%Y%m%d%H%M%S") + "_" + str(randomNum) + "." + gethz
-    except:
-        img.filename = datetime.now().strftime("%Y%m%d%H%M%S") + img.filename
+
+    # img.filename = datetime.now().strftime("%Y%m%d%H%M%S") + img.filename
     file_path = path + img.filename
     img.save(file_path)
-    pathfile = "/static/photo/" + img.filename
-    return pathfile
+    # pathfile = "/static/photo/" + img.filename
+    data = {"msg": "success"}
+    payload = json.dumps(data)
+    return payload, 200
+    # return pathfile,200
 
 
 app_id = "c751a57fd14a86f4"
@@ -1052,8 +1094,26 @@ def login_yiban():
     payload = {"access_token": access_token}
     url = "https://openapi.yiban.cn/user/me"
     response = requests.request("GET", url, params=payload)
-    username = response.json()["info"]["yb_username"]
-    msg = {"username": username}
+
+    ybusername = response.json()["info"]["yb_username"]
+    ybnickname = response.json()["info"]["yb_usernick"]
+    ybsex = response.json()["info"]["yb_sex"]
+    if ybsex == "M":
+        ybsex = 1
+    ybschool = response.json()["info"]["yb_schoolname"]
+
+    user = User.query.filter_by(username=ybusername).first()
+    if user != None:
+        userid = user.id
+    else:
+        newuser = User(username=ybusername, nickname=ybnickname, face="/static/photo/8.jpeg", school=ybschool,
+                       sex=ybsex)
+        db.session.add(newuser)
+        db.session.commit()
+        userss = User.query.filter_by(username=ybusername).first()
+        userid = userss.id
+
+    msg = {"userid": userid}
     data = json.dumps(msg)
     return data, 200
 

@@ -1,6 +1,5 @@
 from datetime import datetime
 from faker import Faker
-
 # 链接服务器用的代码
 from flask import Flask
 from flask_sqlalchemy import SQLAlchemy
@@ -12,20 +11,7 @@ app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.config['SECRET_KEY'] = 'xxx'
 db = SQLAlchemy(app)
 
-# 本地测试用的代码
-"""
-from flask import Flask
-from flask_sqlalchemy import SQLAlchemy
-import os
 
-
-app = Flask(__name__)
-basedir = os.path.abspath(os.path.dirname(__file__))
-app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///' + os.path.join(basedir, 'data.sqlite')
-app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
-app.config['SECRET_KEY'] = 'xxx'
-db = SQLAlchemy(app)
-"""
 
 
 # 用户
@@ -52,10 +38,7 @@ class User(db.Model):
                                  backref='author', lazy='dynamic')  # 我发的
     reply_received = db.relationship('Reply', foreign_keys='Reply.recipient_id',
                                      backref='recipient', lazy='dynamic')  # 我收的
-    # messages_sent = db.relationship('Message', foreign_keys='Message.sender_id',
-    #                                 backref='author', lazy='dynamic')  # 我发的
-    # messages_received = db.relationship('Message', foreign_keys='Message.recipient_id',
-    #                                     backref='recipient', lazy='dynamic')  # 我收的
+
     followed = db.relationship('Follow',
                                foreign_keys='Follow.follower_id',
                                backref=db.backref('follower', lazy='joined'),
@@ -187,17 +170,6 @@ class Search(db.Model):
     cp_or_act = db.Column(db.Integer)  # 数字１代表活动，数字２代表竞赛
 
 
-# # 聊天
-# class Message(db.Model):
-#     __tablename__ = 'messages'
-#     id = db.Column(db.Integer, primary_key=True)
-#     sender_id = db.Column(db.Integer, db.ForeignKey('user.id'))
-#     recipient_id = db.Column(db.Integer, db.ForeignKey('user.id'))
-#     body = db.Column(db.TEXT)
-#     add_time = db.Column(db.DateTime, index=True, default=datetime.now)  # 添加时间
-#
-#     def __repr__(self):
-#         return '<Message {}>'.format(self.body)
 
 
 # 关注
