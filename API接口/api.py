@@ -8,6 +8,10 @@ from flask import request
 import requests
 
 basedir = os.path.abspath(os.path.dirname(__file__))
+app_id = "c751a57fd14a86f4"
+app_secret = "923460388580b30507e5deaacd08f39e"
+back_url = "http://188888888.xyz:5000/backurl"
+
 
 """
 已经完成的功能
@@ -51,8 +55,14 @@ basedir = os.path.abspath(os.path.dirname(__file__))
 # 获取竞赛推文
 @app.route("/home/compete", methods=['POST', 'GET'])
 def HomeCpt():
+    page = request.form.get('page')
+    if not page:
+        page = 1
+    else:
+        page = int(page)
     if request.method == 'POST' and request.form.get('sort') == '0':
-        c = Competition.query.order_by(Competition.num_of_view.desc()).all()  # desc()是从大到小，没有desc就是从小到大
+        c = Competition.query.order_by(Competition.num_of_view.desc()).paginate(page, per_page=10,
+                                                                                error_out=False).items  # desc()是从大到小，没有desc就是从小到大
         payload = []
         content = {}
         for cc in c:
@@ -67,7 +77,8 @@ def HomeCpt():
         return payload, 200
     else:
         # 新发布的文章时间比较大，就先出现用ｄｅｓｃ从大到小排序
-        c = Competition.query.order_by(Competition.create_time.desc()).all()
+        c = Competition.query.order_by(Competition.create_time.desc()).paginate(page, per_page=10,
+                                                                                error_out=False).items
         payload = []
         content = {}
         for cc in c:
@@ -87,6 +98,11 @@ def HomeCpt():
 def CptDetail():
     id = request.form.get('id')  # 获取竞赛的内容id
     user_id = request.form.get('userid')  # 获取用户的id
+    page = request.form.get('page')
+    if not page:
+        page = 1
+    else:
+        page = int(page)
     if user_id == '-1':  # 如果未登录，则将收藏设置为-1
         collection = -1
     else:  # 在收藏竞赛的表中查找用户名和文章id是否关联
@@ -116,7 +132,9 @@ def CptDetail():
     '''评论'''
     payload = []
     contentss = {}
-    cs = com.replys
+    cs = Reply.query.filter_by(competition_id=id).filter(Reply.type == 1).paginate(page, per_page=10,
+                                                                                   error_out=False).items
+    # cs = com.replys
     for c in cs:
         if c.type == 1:
             comid = c.id  # 评论表的id
@@ -289,9 +307,15 @@ def delsearch():
 # 获取活动推文
 @app.route("/home/activity", methods=['POST', 'GET'])
 def HomeAct():
+    page = request.form.get('page')
+    if not page:
+        page = 1
+    else:
+        page = int(page)
     if request.method == 'POST' and request.form.get('sort') == '0':
         # 默认是时间顺序排列，直接ｇｅｔ和ｐｏｓｔ上来的不是０的时候，就时间排序，
-        A = Activity.query.order_by(Activity.num_of_view.desc()).all()  # desc()是从大到小，没有desc就是从小到大
+        A = Activity.query.order_by(Activity.num_of_view.desc()).paginate(page, per_page=10,
+                                                                          error_out=False).items  # desc()是从大到小，没有desc就是从小到大
         payload = []
         content = {}
         for AA in A:
@@ -307,7 +331,7 @@ def HomeAct():
 
     else:
         # 新发布的文章时间比较大，就先出现用ｄｅｓｃ从大到小排序
-        A = Activity.query.order_by(Activity.create_time.desc()).all()
+        A = Activity.query.order_by(Activity.create_time.desc()).paginate(page, per_page=10, error_out=False).items
         payload = []
         content = {}
         for AA in A:
@@ -327,6 +351,12 @@ def HomeAct():
 def ActDetail():
     id = request.form.get('id')  # 获取活动的内容id
     user_id = request.form.get('userid')  # 获取用户的id
+    page = request.form.get('page')
+    if not page:
+        page = 1
+    else:
+        page = int(page)
+
     act = Activity.query.get(id)  # 找到对应的活动表
     if act == None:
         data = {"msg": "could not find this activity id"}
@@ -356,7 +386,9 @@ def ActDetail():
     '''评论'''
     payload = []
     contentss = {}
-    cs = act.replys
+    cs = Reply.query.filter_by(activity_id=id).filter(Reply.type == 1).paginate(page, per_page=10,
+                                                                                   error_out=False).items
+    # cs = act.replys
     for c in cs:
         if c.type == 1:
             comid = c.id  # 评论表的id
@@ -437,12 +469,50 @@ def deactCollection():
 @app.route("/community", methods=["GET", "POST"])
 def Community():
     user = request.form.get('userid')
+    page = request.form.get('page')
+    if not page:
+        page = 1
+    else:
+        page = int(page)
     if request.method == 'POST' and request.form.get('sort') == '0':
         # 默认是时间顺序排列，和ｐｏｓｔ上来的是０的时候，就热度排序，
-        A = Blog.query.order_by(Blog.num_of_view.desc()).all()  # desc()是从大到小，没有desc就是从小到大
+        # A = Blog.query.order_by(Blog.num_of_view.desc()).paginate(page, per_page=10,
+        #                                                           error_out=False).items  # desc()是从大到小，没有desc就是从小到大
+        A = db.session.query(Blog, User).join(User, Blog.user_id == User.id).order_by(Blog.num_of_view.desc()).paginate(
+            page, per_page=10, error_out=False).items
+
         payload = []
         content = {}
         for AA in A:
+            # name = User.query.get(AA.user_id).username
+            # face = User.query.get(AA.user_id).face
+            # datetime = AA.create_time
+            # time = datetime.strftime('%Y-%m-%d %H:%M:%S')
+            # content = {'id': AA.id, 'title': AA.title, 'authorid': AA.user_id, 'pageviews': AA.num_of_view,
+            #            'time': time, "author": name, "avatar": face}
+
+            name = AA[1].username
+            face = AA[1].face
+            time = AA[0].create_time.strftime('%Y-%m-%d %H:%M:%S')
+            content = {'id': AA[0].id, 'title': AA[0].title, 'authorid': AA[0].user_id, 'pageviews': AA[0].num_of_view,
+                       'time': time, "author": name, "avatar": face}
+            payload.append(content)
+            content = {}
+        data = {"data": payload}
+        payload = json.dumps(data)
+        return payload, 200
+
+    if request.method == 'POST' and request.form.get('sort') == '2':
+        if user == None:
+            return "error"
+        # 默认是时间顺序排列，和ｐｏｓｔ上来的是2的时候，就只看关注的
+        # 双表联立查询，将博客的表和关注的表联立起来，返回的是一个列表数组
+        userblogs = db.session.query(Blog, Follow).join(Follow, Blog.user_id == Follow.followed_id).filter(
+            Follow.follower_id == user).paginate(page, per_page=10,error_out=False).items
+        payload = []
+        content = {}
+        for blog in userblogs:
+            AA = blog[0]  # 找到对应的博客
             name = User.query.get(AA.user_id).username
             face = User.query.get(AA.user_id).face
             datetime = AA.create_time
@@ -455,42 +525,24 @@ def Community():
         payload = json.dumps(data)
         return payload, 200
 
-    if request.method == 'POST' and request.form.get('sort') == '2':
-        if user == None:
-            return "error"
-        # 默认是时间顺序排列，和ｐｏｓｔ上来的是2的时候，就只看关注的
-        A = User.query.get(user).followed  # 我关注的人
-        payload = []
-        content = {}
-
-        for a in A:
-            bloguserid = a.followed_id  # 我关注的人的id
-            userblogs = User.query.get(bloguserid).myblog
-            for blog in userblogs:
-                AA = blog  # 找到对应的博客
-                name = User.query.get(AA.user_id).username
-                face = User.query.get(AA.user_id).face
-                datetime = AA.create_time
-                time = datetime.strftime('%Y-%m-%d %H:%M:%S')
-                content = {'id': AA.id, 'title': AA.title, 'authorid': AA.user_id, 'pageviews': AA.num_of_view,
-                           'time': time, "author": name, "avatar": face}
-                payload.append(content)
-                content = {}
-        data = {"data": payload}
-        payload = json.dumps(data)
-        return payload, 200
-
     # 新发布的文章时间比较大，就先出现用ｄｅｓｃ从大到小排序
-    A = Blog.query.order_by(Blog.create_time.desc()).all()
+    # A = Blog.query.order_by(Blog.create_time.desc()).paginate(page, per_page=10, error_out=False).items
+    A = db.session.query(Blog,User).join(User,Blog.user_id==User.id).order_by(Blog.create_time.desc()).paginate(page, per_page=10, error_out=False).items
     payload = []
     content = {}
     for AA in A:
-        name = User.query.get(AA.user_id).username
-        face = User.query.get(AA.user_id).face
-        datetime = AA.create_time
+        # name = User.query.get(AA.user_id).username
+        # face = User.query.get(AA.user_id).face
+        # datetime = AA.create_time
+        name = AA[1].username
+        face = AA[1].face
+        datetime = AA[0].create_time
+
         time = datetime.strftime('%Y-%m-%d %H:%M:%S')
-        content = {'id': AA.id, 'title': AA.title, 'author': name, 'pageviews': AA.num_of_view,
-                   'time': time, "authorid": AA.user_id, "avatar": face}
+        # content = {'id': AA.id, 'title': AA.title, 'author': name, 'pageviews': AA.num_of_view,
+        #            'time': time, "authorid": AA.user_id, "avatar": face}
+        content = {'id': AA[0].id, 'title': AA[0].title, 'author': name, 'pageviews': AA[0].num_of_view,
+                   'time': time, "authorid": AA[0].user_id, "avatar": face}
         payload.append(content)
         content = {}
     data = {"data": payload}
@@ -528,7 +580,11 @@ def blogedit():
 def BlogDe():
     id = request.form.get('id')  # 获取博客的的内容id
     user_id = request.form.get('userid')  # 获取用户的id
-
+    page = request.form.get('page')  # 获取页数
+    if not page:
+        page = 1
+    else:
+        page = int(page)
     blog = Blog.query.get(id)  # 找到对应的博客表
     if blog == None:
         data = {"msg": "could not find this blog id"}
@@ -565,8 +621,9 @@ def BlogDe():
     '''评论'''
     payload = []
     contentss = {}
-    cs = blog.replys
-    # cs = Reply.query.order_by(Reply.addtime.desc()).paginate(1, per_page=10, error_out=False).items
+    cs = Reply.query.filter_by(blog_id=id).filter(Reply.type == 1).paginate(page, per_page=10, error_out=False).items
+    # cs = blog.replys
+    # cs = Reply.query.order_by(Reply.addtime.desc()).paginate(page, per_page=10, error_out=False).items
     for c in cs:
         if c.type == 1:
             comid = c.id  # 评论表的id
@@ -576,7 +633,6 @@ def BlogDe():
             comcontent = c.content  # 评论的内容
             comtime = c.addtime.strftime('%Y-%m-%d %H:%M:%S')  # 评论的时间
             replyss = Reply.query.filter_by(comment_id=comid).all()
-            # replyss = Reply.query.filter_by(comment_id=comid).paginate(1, per_page=100, error_out = False).items
 
             num = 0
             for reply in replyss:
@@ -650,12 +706,18 @@ def deblogCollection():
 @app.route("/reply", methods=["GET", "POST"])
 def CommentReply():
     id = request.form.get('id')  # 获取要查看的id
+    page = request.form.get('page')
+    if not page:
+        page = 1
+    else:
+        page = int(page)
     if id == None:
         pass
     else:
         payload = []
         contentss = {}
-        replys = Reply.query.filter_by(comment_id=id).all()  # 获取当前评论id的回复者们
+        replys = Reply.query.filter_by(comment_id=id).paginate(page, per_page=10,
+                                                               error_out=False).items  # 获取当前评论id的回复者们
         for reply in replys:  # 从回复者们分别打印每个回复者的信息以及 回复者的回复被回复的次数
             replyid = reply.id  # 回复的表的id
             sender_id = reply.sender_id  # 发送者的id
@@ -1075,9 +1137,6 @@ def uploadpic():
     # return pathfile,200
 
 
-app_id = "c751a57fd14a86f4"
-app_secret = "923460388580b30507e5deaacd08f39e"
-back_url = "http://188888888.xyz:5000/backurl"
 
 
 @app.route("/backurl")
@@ -1117,6 +1176,9 @@ def login_yiban():
     data = json.dumps(msg)
     return data, 200
 
+@app.route('/')
+def hello():
+    return "nginx hello"
 
 if __name__ == "__main__":
-    app.run(host="0.0.0.0")
+    app.run(host="0.0.0.0",port=5000)
