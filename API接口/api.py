@@ -12,7 +12,6 @@ app_id = "c751a57fd14a86f4"
 app_secret = "923460388580b30507e5deaacd08f39e"
 back_url = "http://188888888.xyz:5000/backurl"
 
-
 """
 已经完成的功能
 .获取竞赛推文/home/compete 
@@ -213,50 +212,48 @@ def decompCollection():
 # 搜索
 @app.route("/search", methods=["GET", "POST"])
 def HomeSearchcp():
-    js = request.form.get('competition')
-    hd = request.form.get('activity')
+    # js = request.form.get('competition')
+    # hd = request.form.get('activity')
+    keyword = request.form.get('keyword')
     userid = request.form.get('userid')
     if userid == None or User.query.get(userid) == None:
         data = {'msg': "请输入正确的用户id"}
         payload = json.dumps(data)
         return payload, 400
-    if js == None and hd != None:  # 活动
-        key_remark = hd
+    # if js == None and hd != None:  # 活动
+    if keyword == None:
+        data = {'msg': "请输入搜索内容"}
+        payload = json.dumps(data)
+        return payload, 400
+    else:
+        key_remark = keyword
         aa = Activity.query.filter(Activity.title.like("%" + key_remark + "%")).all()
         s = Search(keyword=key_remark, user_id=userid, cp_or_act=1)
         db.session.add(s)
         db.session.commit()
-        payload = []
+        payload1 = []
         contentss = {}
         for a in aa:
             contentss = {"title": a.title, "id": a.id, "pageviews": a.num_of_view,
-                         "time": a.create_time.strftime('%Y-%m-%d %H:%M:%S')}
-            payload.append(contentss)
+                         "time": a.create_time.strftime('%Y-%m-%d %H:%M:%S'), "url": a.url}
+            payload1.append(contentss)
             contentss = {}
-        data = {"data": payload}
-        payload = json.dumps(data)
-        return payload, 200
 
-    elif hd == None and js != None:  # 竞赛
-        key_remark = js
+
         aa = Competition.query.filter(Competition.title.like("%" + key_remark + "%")).all()
         s = Search(keyword=key_remark, user_id=userid, cp_or_act=2)
         db.session.add(s)
         db.session.commit()
-        payload = []
+        payload2 = []
         contentss = {}
         for a in aa:
             contentss = {"title": a.title, "id": a.id, "pageviews": a.num_of_view,
-                         "time": a.create_time.strftime('%Y-%m-%d %H:%M:%S')}
-            payload.append(contentss)
+                         "time": a.create_time.strftime('%Y-%m-%d %H:%M:%S'), "url": a.url}
+            payload2.append(contentss)
             contentss = {}
-        data = {"data": payload}
+        data = {"competition": payload2, "activity": payload1}
         payload = json.dumps(data)
         return payload, 200
-    else:
-        data = {'msg': "请选择竞赛或者活动"}
-        payload = json.dumps(data)
-        return payload, 400
 
 
 # 搜索历史
@@ -387,7 +384,7 @@ def ActDetail():
     payload = []
     contentss = {}
     cs = Reply.query.filter_by(activity_id=id).filter(Reply.type == 1).paginate(page, per_page=10,
-                                                                                   error_out=False).items
+                                                                                error_out=False).items
     # cs = act.replys
     for c in cs:
         if c.type == 1:
@@ -508,7 +505,7 @@ def Community():
         # 默认是时间顺序排列，和ｐｏｓｔ上来的是2的时候，就只看关注的
         # 双表联立查询，将博客的表和关注的表联立起来，返回的是一个列表数组
         userblogs = db.session.query(Blog, Follow).join(Follow, Blog.user_id == Follow.followed_id).filter(
-            Follow.follower_id == user).paginate(page, per_page=10,error_out=False).items
+            Follow.follower_id == user).paginate(page, per_page=10, error_out=False).items
         payload = []
         content = {}
         for blog in userblogs:
@@ -527,7 +524,8 @@ def Community():
 
     # 新发布的文章时间比较大，就先出现用ｄｅｓｃ从大到小排序
     # A = Blog.query.order_by(Blog.create_time.desc()).paginate(page, per_page=10, error_out=False).items
-    A = db.session.query(Blog,User).join(User,Blog.user_id==User.id).order_by(Blog.create_time.desc()).paginate(page, per_page=10, error_out=False).items
+    A = db.session.query(Blog, User).join(User, Blog.user_id == User.id).order_by(Blog.create_time.desc()).paginate(
+        page, per_page=10, error_out=False).items
     payload = []
     content = {}
     for AA in A:
@@ -989,7 +987,7 @@ def myblogs():
         id = b.id
         pageviews = b.num_of_view
         time = b.create_time.strftime('%Y-%m-%d %H:%M:%S')
-        content = {"title": title, "id": id, "pageviews": pageviews, "time": time}
+        content = {"title": title, "id": id, "pageviews": pageviews, "time": time, "avatar": user.face}
         payload.append(content)
         content = {}
     data = {"myblogs": payload}
@@ -1051,7 +1049,8 @@ def mycolcompete():
         id = a.id
         pageviews = a.num_of_view
         time = a.create_time.strftime('%Y-%m-%d %H:%M:%S')
-        content = {"title": title, "id": id, "pageviews": pageviews, "time": time}
+        url = a.url
+        content = {"title": title, "id": id, "pageviews": pageviews, "time": time, "url": url}
         payload.append(content)
         content = {}
     data = {"myblogs": payload}
@@ -1082,7 +1081,8 @@ def mycolactivity():
         id = a.id
         pageviews = a.num_of_view
         time = a.create_time.strftime('%Y-%m-%d %H:%M:%S')
-        content = {"title": title, "id": id, "pageviews": pageviews, "time": time}
+        url = a.url
+        content = {"title": title, "id": id, "pageviews": pageviews, "time": time, "url": url}
         payload.append(content)
         content = {}
     data = {"myblogs": payload}
@@ -1109,11 +1109,12 @@ def colblog():
     content = {}
     for bs in blogs:
         b = Blog.query.get(bs.blog_id)
+        u = User.query.get(bs.user_id)
         title = b.title
         id = b.id
         pageviews = b.num_of_view
         time = b.create_time.strftime('%Y-%m-%d %H:%M:%S')
-        content = {"title": title, "id": id, "pageviews": pageviews, "time": time}
+        content = {"title": title, "id": id, "pageviews": pageviews, "time": time, "avatar": u.face}
         payload.append(content)
         content = {}
     data = {"myblogs": payload}
@@ -1135,8 +1136,6 @@ def uploadpic():
     payload = json.dumps(data)
     return payload, 200
     # return pathfile,200
-
-
 
 
 @app.route("/backurl")
@@ -1176,9 +1175,11 @@ def login_yiban():
     data = json.dumps(msg)
     return data, 200
 
+
 @app.route('/')
 def hello():
-    return "nginx hello"
+    return "hello world......... ngrok is good!!!!"
+
 
 if __name__ == "__main__":
-    app.run(host="0.0.0.0",port=5000)
+    app.run(host="0.0.0.0")

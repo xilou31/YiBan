@@ -6,12 +6,10 @@ from flask_sqlalchemy import SQLAlchemy
 import pymysql
 
 app = Flask(__name__)
-app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql+pymysql://root:123456@47.107.98.254:3306/yiban'
+app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql+pymysql://root:123456@47.107.98.254:3306/yiban?charset=utf8mb4'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.config['SECRET_KEY'] = 'xxx'
 db = SQLAlchemy(app)
-
-
 
 
 # 用户
@@ -170,8 +168,6 @@ class Search(db.Model):
     cp_or_act = db.Column(db.Integer)  # 数字１代表活动，数字２代表竞赛
 
 
-
-
 # 关注
 class Follow(db.Model):
     __tablename__ = 'follows'
@@ -183,4 +179,5 @@ class Follow(db.Model):
 
 
 if __name__ == "__main__":
+    # db.drop_all()
     db.create_all()
