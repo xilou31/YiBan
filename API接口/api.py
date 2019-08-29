@@ -10,7 +10,7 @@ import requests
 basedir = os.path.abspath(os.path.dirname(__file__))
 app_id = "c751a57fd14a86f4"
 app_secret = "923460388580b30507e5deaacd08f39e"
-back_url = "http://188888888.xyz/backurl"
+back_url = "http://188888888.xyz:5000/backurl"
 
 """
 已经完成的功能
@@ -216,6 +216,11 @@ def HomeSearchcp():
     # hd = request.form.get('activity')
     keyword = request.form.get('keyword')
     userid = request.form.get('userid')
+    page = request.form.get('page')
+    if not page:
+        page = 1
+    else:
+        page = int(page)
     if userid == None or User.query.get(userid) == None:
         data = {'msg': "请输入正确的用户id"}
         payload = json.dumps(data)
@@ -227,10 +232,19 @@ def HomeSearchcp():
         return payload, 400
     else:
         key_remark = keyword
-        aa = Activity.query.filter(Activity.title.like("%" + key_remark + "%")).all()
-        s = Search(keyword=key_remark, user_id=userid, cp_or_act=1)
-        db.session.add(s)
-        db.session.commit()
+        aa = Activity.query.filter(Activity.title.like("%" + key_remark + "%")).paginate(page, per_page=5,
+                                                                                         error_out=False).items
+        olds = Search.query.filter_by(keyword=key_remark).first()
+        if olds == None:    #保证搜索的关键字不重复并且更新搜索历史记录的位置
+            s = Search(keyword=key_remark, user_id=userid)
+            db.session.add(s)
+            db.session.commit()
+        else:
+            db.session.delete(olds)
+            db.session.commit()
+            s = Search(keyword=key_remark, user_id=userid)
+            db.session.add(s)
+            db.session.commit()
         payload1 = []
         contentss = {}
         for a in aa:
@@ -239,11 +253,11 @@ def HomeSearchcp():
             payload1.append(contentss)
             contentss = {}
 
-
-        aa = Competition.query.filter(Competition.title.like("%" + key_remark + "%")).all()
-        s = Search(keyword=key_remark, user_id=userid, cp_or_act=2)
-        db.session.add(s)
-        db.session.commit()
+        aa = Competition.query.filter(Competition.title.like("%" + key_remark + "%")).paginate(page, per_page=5,
+                                                                                               error_out=False).items
+        # s = Search(keyword=key_remark, user_id=userid, cp_or_act=2)
+        # db.session.add(s)
+        # db.session.commit()
         payload2 = []
         contentss = {}
         for a in aa:
@@ -260,6 +274,11 @@ def HomeSearchcp():
 @app.route("/search/history", methods=["GET", "POST"])
 def searchhistory():
     userid = request.form.get('userid')  # 用户的id
+    page = request.form.get('page')
+    if not page:
+        page = 1
+    else:
+        page = int(page)
     user = User.query.get(userid)
     # type = request.form.get('type') #  数字１代表活动，数字２代表竞赛
     if userid == None or user == None:
@@ -268,7 +287,8 @@ def searchhistory():
         return payload, 400
     payload = []
     contentss = {}
-    shs = Search.query.filter_by(user_id=userid)
+    shs = Search.query.filter_by(user_id=userid).paginate(page, per_page=10,
+                                                          error_out=False).items #再来个降顺序排序才行
     for sh in shs:
         contentss = {"keyword": sh.keyword, 'id': sh.id}
         payload.append(contentss)
@@ -1053,7 +1073,7 @@ def mycolcompete():
         content = {"title": title, "id": id, "pageviews": pageviews, "time": time, "url": url}
         payload.append(content)
         content = {}
-    data = {"myblogs": payload}
+    data = {"data": payload}
     payload = json.dumps(data)
     return payload, 200
 
@@ -1085,7 +1105,7 @@ def mycolactivity():
         content = {"title": title, "id": id, "pageviews": pageviews, "time": time, "url": url}
         payload.append(content)
         content = {}
-    data = {"myblogs": payload}
+    data = {"data": payload}
     payload = json.dumps(data)
     return payload, 200
 
@@ -1114,10 +1134,11 @@ def colblog():
         id = b.id
         pageviews = b.num_of_view
         time = b.create_time.strftime('%Y-%m-%d %H:%M:%S')
-        content = {"title": title, "id": id, "pageviews": pageviews, "time": time, "avatar": u.face}
+        content = {"title": title, "id": id, "pageviews": pageviews, "time": time, "avatar": u.face,
+                   "author": u.nickname, "userid": u.id}
         payload.append(content)
         content = {}
-    data = {"myblogs": payload}
+    data = {"data": payload}
     payload = json.dumps(data)
     return payload, 200
 
