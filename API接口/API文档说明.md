@@ -78,15 +78,15 @@
 
 | 参数    | 类型    | 是否必须 | 说明         |
 |---------|---------|----------|--------------|
-| competition | varchar | competition 和 activity 必选一个     | 搜索keywork，搜索竞赛 |
-| activity  | varchar     | competition 和 activity 必选一个       | 搜索keywork，搜索活动       |
+|keyword | varchar | 是     | 搜索keywork，活动和竞赛 |
+
 | userid  | varchar     | 用户的id       | 保存搜索历史    |
 
 >   返回参数：
 
 | 参数  | 类型    | 说明           |
 |-------|---------|----------------|
-| data    | json数组     | json数组格式与活动或者竞赛列表data格式一样   |
+| conpetition和activity    | json数组     | json数组格式与活动或者竞赛列表data格式一样   |
 
 ## 活动内容 ##
 

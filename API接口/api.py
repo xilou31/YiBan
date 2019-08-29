@@ -10,7 +10,7 @@ import requests
 basedir = os.path.abspath(os.path.dirname(__file__))
 app_id = "c751a57fd14a86f4"
 app_secret = "923460388580b30507e5deaacd08f39e"
-back_url = "http://188888888.xyz:5000/backurl"
+back_url = "http://188888888.xyz/backurl"
 
 """
 已经完成的功能
@@ -137,7 +137,7 @@ def CptDetail():
     for c in cs:
         if c.type == 1:
             comid = c.id  # 评论表的id
-            comauthor = User.query.get(c.sender_id).username  # 评论者的名字
+            comauthor = User.query.get(c.sender_id).nickname  # 评论者的名字
             comauthorid = User.query.get(c.sender_id).id  # 评论者的id
             comauthorface = User.query.get(c.sender_id).face  # 评论者的头像
             comcontent = c.content  # 评论的内容
@@ -389,7 +389,7 @@ def ActDetail():
     for c in cs:
         if c.type == 1:
             comid = c.id  # 评论表的id
-            comauthor = User.query.get(c.sender_id).username  # 评论者的名字
+            comauthor = User.query.get(c.sender_id).nickname  # 评论者的名字
             comauthorid = User.query.get(c.sender_id).id  # 评论者的id
             comauthorface = User.query.get(c.sender_id).face  # 评论者的头像
             comcontent = c.content  # 评论的内容
@@ -481,14 +481,14 @@ def Community():
         payload = []
         content = {}
         for AA in A:
-            # name = User.query.get(AA.user_id).username
+            # name = User.query.get(AA.user_id).nickname
             # face = User.query.get(AA.user_id).face
             # datetime = AA.create_time
             # time = datetime.strftime('%Y-%m-%d %H:%M:%S')
             # content = {'id': AA.id, 'title': AA.title, 'authorid': AA.user_id, 'pageviews': AA.num_of_view,
             #            'time': time, "author": name, "avatar": face}
 
-            name = AA[1].username
+            name = AA[1].nickname
             face = AA[1].face
             time = AA[0].create_time.strftime('%Y-%m-%d %H:%M:%S')
             content = {'id': AA[0].id, 'title': AA[0].title, 'authorid': AA[0].user_id, 'pageviews': AA[0].num_of_view,
@@ -510,7 +510,7 @@ def Community():
         content = {}
         for blog in userblogs:
             AA = blog[0]  # 找到对应的博客
-            name = User.query.get(AA.user_id).username
+            name = User.query.get(AA.user_id).nickname
             face = User.query.get(AA.user_id).face
             datetime = AA.create_time
             time = datetime.strftime('%Y-%m-%d %H:%M:%S')
@@ -529,10 +529,10 @@ def Community():
     payload = []
     content = {}
     for AA in A:
-        # name = User.query.get(AA.user_id).username
+        # name = User.query.get(AA.user_id).nickname
         # face = User.query.get(AA.user_id).face
         # datetime = AA.create_time
-        name = AA[1].username
+        name = AA[1].nickname
         face = AA[1].face
         datetime = AA[0].create_time
 
@@ -609,7 +609,7 @@ def BlogDe():
     content = blog.content  # 博客表的内容
     time = blog.create_time.strftime('%Y-%m-%d %H:%M:%S')  # 博客表的发布时间
     pageviews = blog.num_of_view  # 博客的浏览次数
-    author = User.query.get(blog.user_id).username  # 博客的发布者
+    author = User.query.get(blog.user_id).nickname  # 博客的发布者
     face = User.query.get(blog.user_id).face  # 发布者的头像
     pageviews = pageviews + 1
     blog.num_of_view = pageviews
@@ -625,7 +625,7 @@ def BlogDe():
     for c in cs:
         if c.type == 1:
             comid = c.id  # 评论表的id
-            comauthor = User.query.get(c.sender_id).username  # 评论者的名字
+            comauthor = User.query.get(c.sender_id).nickname  # 评论者的名字
             comauthorid = User.query.get(c.sender_id).id  # 评论者的id
             comauthorface = User.query.get(c.sender_id).face  # 评论者的头像
             comcontent = c.content  # 评论的内容
@@ -720,7 +720,7 @@ def CommentReply():
             replyid = reply.id  # 回复的表的id
             sender_id = reply.sender_id  # 发送者的id
             face = User.query.get(reply.sender_id).face  # 发送者的头像
-            name = User.query.get(reply.sender_id).username  # 发送者的名字
+            name = User.query.get(reply.sender_id).nickname  # 发送者的名字
             content = reply.content  # 内容
             replyids = reply.id  # 子节点的回复
             comtime = reply.addtime.strftime('%Y-%m-%d %H:%M:%S')  # 回复的时间
@@ -1014,7 +1014,7 @@ def myfollow():
     content = {}
     for f in following:
         u = User.query.get(f.followed_id)
-        name = u.username
+        name = u.nickname
         userid = u.id
         face = u.face
         content = {"username": name, "userid": userid, "avatar": face}
@@ -1183,3 +1183,4 @@ def hello():
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0")
+
