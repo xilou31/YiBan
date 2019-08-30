@@ -212,8 +212,6 @@ def decompCollection():
 # 搜索
 @app.route("/search", methods=["GET", "POST"])
 def HomeSearchcp():
-    # js = request.form.get('competition')
-    # hd = request.form.get('activity')
     keyword = request.form.get('keyword')
     userid = request.form.get('userid')
     page = request.form.get('page')
@@ -221,30 +219,17 @@ def HomeSearchcp():
         page = 1
     else:
         page = int(page)
-    if userid == None or User.query.get(userid) == None:
-        data = {'msg': "请输入正确的用户id"}
-        payload = json.dumps(data)
-        return payload, 400
-    # if js == None and hd != None:  # 活动
+
     if keyword == None:
         data = {'msg': "请输入搜索内容"}
         payload = json.dumps(data)
         return payload, 400
-    else:
+
+    if userid == "-1":
+
         key_remark = keyword
         aa = Activity.query.filter(Activity.title.like("%" + key_remark + "%")).paginate(page, per_page=5,
                                                                                          error_out=False).items
-        olds = Search.query.filter_by(keyword=key_remark).first()
-        if olds == None:    #保证搜索的关键字不重复并且更新搜索历史记录的位置
-            s = Search(keyword=key_remark, user_id=userid)
-            db.session.add(s)
-            db.session.commit()
-        else:
-            db.session.delete(olds)
-            db.session.commit()
-            s = Search(keyword=key_remark, user_id=userid)
-            db.session.add(s)
-            db.session.commit()
         payload1 = []
         contentss = {}
         for a in aa:
@@ -255,9 +240,6 @@ def HomeSearchcp():
 
         aa = Competition.query.filter(Competition.title.like("%" + key_remark + "%")).paginate(page, per_page=5,
                                                                                                error_out=False).items
-        # s = Search(keyword=key_remark, user_id=userid, cp_or_act=2)
-        # db.session.add(s)
-        # db.session.commit()
         payload2 = []
         contentss = {}
         for a in aa:
@@ -268,6 +250,48 @@ def HomeSearchcp():
         data = {"competition": payload2, "activity": payload1}
         payload = json.dumps(data)
         return payload, 200
+
+    if userid == None or User.query.get(userid) == None:
+        data = {'msg': "请输入正确的用户id"}
+        payload = json.dumps(data)
+        return payload, 400
+
+
+    key_remark = keyword
+    aa = Activity.query.filter(Activity.title.like("%" + key_remark + "%")).paginate(page, per_page=5,
+                                                                                     error_out=False).items
+    olds = Search.query.filter_by(keyword=key_remark).first()
+    if olds == None:    #保证搜索的关键字不重复并且更新搜索历史记录的位置
+        s = Search(keyword=key_remark, user_id=userid)
+        db.session.add(s)
+        db.session.commit()
+    else:
+        db.session.delete(olds)
+        db.session.commit()
+        s = Search(keyword=key_remark, user_id=userid)
+        db.session.add(s)
+        db.session.commit()
+    payload1 = []
+    contentss = {}
+    for a in aa:
+        contentss = {"title": a.title, "id": a.id, "pageviews": a.num_of_view,
+                     "time": a.create_time.strftime('%Y-%m-%d %H:%M:%S'), "url": a.url}
+        payload1.append(contentss)
+        contentss = {}
+
+    aa = Competition.query.filter(Competition.title.like("%" + key_remark + "%")).paginate(page, per_page=5,
+                                                                                           error_out=False).items
+
+    payload2 = []
+    contentss = {}
+    for a in aa:
+        contentss = {"title": a.title, "id": a.id, "pageviews": a.num_of_view,
+                     "time": a.create_time.strftime('%Y-%m-%d %H:%M:%S'), "url": a.url}
+        payload2.append(contentss)
+        contentss = {}
+    data = {"competition": payload2, "activity": payload1}
+    payload = json.dumps(data)
+    return payload, 200
 
 
 # 搜索历史
@@ -287,7 +311,7 @@ def searchhistory():
         return payload, 400
     payload = []
     contentss = {}
-    shs = Search.query.filter_by(user_id=userid).paginate(page, per_page=10,
+    shs = Search.query.filter_by(user_id=userid).order_by(Search.id.desc()).paginate(page, per_page=10,
                                                           error_out=False).items #再来个降顺序排序才行
     for sh in shs:
         contentss = {"keyword": sh.keyword, 'id': sh.id}
@@ -1007,10 +1031,10 @@ def myblogs():
         id = b.id
         pageviews = b.num_of_view
         time = b.create_time.strftime('%Y-%m-%d %H:%M:%S')
-        content = {"title": title, "id": id, "pageviews": pageviews, "time": time, "avatar": user.face}
+        content = {"title": title, "id": id, "pageviews": pageviews, "time": time, "avatar": user.face,"author":user.nickname,"authorid":userid}
         payload.append(content)
         content = {}
-    data = {"myblogs": payload}
+    data = {"data": payload}
     payload = json.dumps(data)
     return payload, 200
 
@@ -1204,4 +1228,3 @@ def hello():
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0")
-
