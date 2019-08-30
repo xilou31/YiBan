@@ -1209,7 +1209,7 @@ def login_yiban():
     if user != None:
         userid = user.id
     else:
-        newuser = User(username=ybusername, nickname=ybnickname, face="/static/photo/8.jpeg", school=ybschool,
+        newuser = User(username=ybusername, nickname=ybnickname, face="/static/photo/A.jpeg", school=ybschool,
                        sex=ybsex)
         db.session.add(newuser)
         db.session.commit()
@@ -1223,7 +1223,7 @@ def login_yiban():
 
 @app.route('/')
 def hello():
-    return "hello world......... ngrok is good!!!!"
+    return "Y"
 
 
 if __name__ == "__main__":
