@@ -18,3 +18,13 @@
 如果想不用flask的服务器 那么可以用 
 gunicorn -b 0.0.0.0:5000 api:app --reload -t 500 -D --access-logfile log/gunicorn.log
 来替换第四步的命令，想深刻理解（请自行百度 gunicorn部署命令）
+
+
+
+如果想用自己的服务器和自己服务器的数据库
+则在model文件里面修改对应的数据库的账号密码和端口号和数据库名字
+并且单独运行一下model
+命令如下：
+>  python model.py
+
+此时此刻如果没有报错，那么就是创建表成功，才能继续部署api文件
